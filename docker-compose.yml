@@ -1,0 +1,9 @@
+services:
+  sam:
+    image: $SAM_IMG
+    build:
+      context: .
+      dockerfile: Dockerfile
+    network_mode: host   # uses the host's network stack
+    volumes:
+      - ./:/freeSAM

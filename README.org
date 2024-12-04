@@ -1,0 +1,43 @@
+#+TITLE: FPrime reference application for support on ATMEL SAMV family μC's
+#+AUTHOR: Reginald Marr
+
+* Minimal SAMV71 Base Application
+This serves as a basic application which can provides application level control of low level peripherals.
+
+** Features
+- Barebones initialization and startup code for the SAMV71.
+- Integration with FreeRTOS for real-time task management.
+- Example application showcasing basic peripheral usage.
+- Support for open-source toolchains and workflows (e.g., GCC, OpenOCD, and GDB).
+- No dependency on Microchip or IAR IDEs.
+
+** Getting Started
+1. Clone the repository and its submodules:
+   #+BEGIN_SRC sh
+   git clone https://github.com/your-username/FreeSAM.git
+   cd FreeSAM
+   git
+   #+END_SRC
+
+2. Set up your environment:
+   This leverages a docker file
+   #+BEGIN_SRC sh
+   ./run.sh build docker
+   #+END_SRC
+
+3. Build the project:
+   #+BEGIN_SRC sh
+   ./run.sh build app
+   #+END_SRC
+
+4. Upload and reset the board to run the application:
+   #+BEGIN_SRC sh
+   ./run.sh exec base
+   #+END_SRC
+
+** Project Structure
+- =Base/= : Base application source files.
+- =libs/= : Dependencies provided as submodules
+- =build/= : Build output directory.
+- =run.sh= : Primary entry point for this project
+- =README.org= : This documentation.
