@@ -75,6 +75,69 @@ run_docker_compose() {
     exec_cmd "docker compose run $flags $cmd"
 }
 
+wine_exec() {
+    BASE_COMMAND=${1:-}
+    [ -z "$BASE_COMMAND" ] && { echo "Error: must specify base command"; exit 1; }
+
+    # Base flags ensure we start the container with the host username, UID, GID and home path
+    # and the host network
+    # FIXME the network doesn't seem to connect,
+    # this was not a problem when previously following the "KeilDocker" tutorial which used MDK v5.31
+    flags="--as-me "
+    flags+="--volume=$SCRIPT_DIR:$HOME$WDIR "
+
+    # NOTE This seemed to be required after switching users however after doing so keil was unable to
+    # connect to the internet. It's not well understood why this was the case but the issue was resolved
+    # after removing this flag, removing the volume/docker image and re-building fresh.
+    # flags+="--force-owner"
+
+    base_cmd="bash ${SCRIPT_DIR}/libs/docker-wine/docker-wine ${flags} "
+    cmd="$base_cmd $BASE_COMMAND"
+
+    exec_cmd "$cmd"
+    # exit_code=$?
+    # if [ exit_code != 0 ]; then
+    #     echo "Command failed with error code: $exit_code"
+    #     exit $exit_code
+    # fi
+}
+
+keil_exec() {
+    BASE_COMMAND=${1:-}
+    [ -z "$BASE_COMMAND" ] && { echo "Error: must specify base command"; exit 1; }
+
+    # Retrieve the keil exe, v5.41
+    mdk_exe="MDK541.EXE"
+    # NOTE for keil's license
+    # License Agreement MDK v5.41 and above
+    # "Non-Commercial Use License" means an evaluation, preview, beta, pre-release, pilot, academic, educational or community use only license.
+    user="$USER"
+    mdk_path="/home/$user/.wine/drive_c/users/$user/Downloads"
+    uvision_path="/home/$user/.wine/drive_c/users/$user/AppData/Local/Keil_v5/UV4/UV4.exe"
+
+    case $BASE_COMMAND in
+      "uv")
+        wine_exec "wine $uvision_path"
+      ;;
+      "build")
+        # If we don't have micro vision then we need to install it
+        if [ ! -f "$uvision_path" ]; then
+          # In order to install micro vision we need to use the MDK exe
+          if [ ! -f "$mdk_path/$mdk_exe" ]; then
+            download_mdk_cmd="wget https://armkeil.blob.core.windows.net/eval/${mdk_exe} -P $mdk_path"
+            wine_exec "$download_mdk_cmd"
+          fi
+
+          wine_exec "wine $mdk_path/$mdk_exe"
+        fi
+      ;;
+      *)
+      echo "Invalid exec command: ${EXEC_TARGET}"
+      exit 1
+      ;;
+    esac
+}
+
 # Process flags
 for arg in "$@"; do
     case $arg in
@@ -93,6 +156,9 @@ case $1 in
       "base")
         echo "Not yet supported"
         exit 1
+      ;;
+      "keil-cfg")
+        keil_exec "build"
       ;;
       "docker")
         if ! git diff-index --quiet HEAD --; then
@@ -124,7 +190,7 @@ case $1 in
         exit 1
       ;;
       *)
-      echo "Invalid operation."
+      echo "Invalid exec command: ${EXEC_TARGET}"
       exit 1
       ;;
     esac
@@ -135,6 +201,9 @@ case $1 in
     [ -z "$EXEC_TARGET" ] && { echo "Error: must specify target to exec"; exit 1; }
 
     case $EXEC_TARGET in
+      "keil-cfg")
+        keil_exec "uv"
+      ;;
       "base")
         echo "Not yet supported"
         exit 1
@@ -151,7 +220,20 @@ case $1 in
     ;;
 
     "inspect")
-        run_docker_compose "sam bash"
+        INSPECT_TARGET=${2:-}
+        [ -z "$INSPECT_TARGET" ] && { echo "Error: must specify target to inspect"; exit 1; }
+        case $INSPECT_TARGET in
+            "wine")
+              wine_exec "bash"
+          ;;
+            "sam")
+            run_docker_compose "$INSPECT_TARGET bash"
+          ;;
+          *)
+          echo "Invalid inspect target: ${INSPECT_TARGET}"
+          exit 1
+          ;;
+        esac
         ;;
     "teardown")
         echo "Tearing down services..."

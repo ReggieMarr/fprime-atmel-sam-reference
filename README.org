@@ -41,3 +41,49 @@ This serves as a basic application which can provides application level control 
 - =build/= : Build output directory.
 - =run.sh= : Primary entry point for this project
 - =README.org= : This documentation.
+
+* Proving the concept
+This section will document the process of bringing up the initial application which targets the [[https://www.microchip.com/en-us/development-tool/atsamv71-xult][SAM V71 Xplained Ultra Evaluation Kit]].
+
+The goal:
+Bring up an application running FPrime on the SAMV71 that demonstrates some basic threading capabilities, com port and peripheral support.
+
+** Getting started
+Initially I installed the suggested Microchip IDE's MPLAB, Harmony ect on wine.
+The next step was running a demo project I found two that specifically reference FreeRTOS support:
+
+[[https://mplab-discover.microchip.com/v2/item/com.microchip.code.examples/com.microchip.ide.project/com.microchip.subcategories.modules-and-peripherals.communication.i2c/com.microchip.mcu32.mplabx.project.mplab_event_recorder_apps_er_samv71/1.1.0?view=about&dsl=ATSAMV71Q21][This com port event recorder]] came from the MPLab discover page/[[https://github.com/Microchip-MPLAB-Harmony/mplab_event_recorder/tree/v1.1.0][github page]] and seemed appropriate with the following summary:
+
+#+begin_quote
+The application functionality is divided into three threads:
+
+    Sensor Thread – Read and display temperature periodically via Two-Wire Interface High Speed (TWIHS) (I²C)
+    EEPROM Thread – Write the temperature values to EEPROM and display it on the COM (serial) port terminal when requested by the user.
+    User Input Thread – Read the character entered on the COM (serial) port terminal.
+#+end_quote
+[[file:.org_resources/demonstration_features2.png]]
+
+It did make reference of the use of some particular hardware extension that we don't have access to but it is still probably worth going through since we can easily adapt that for the hardware on hand.
+
+
+FreeRTOS also comes with multiple implementations of a [[https://www.freertos.org/Documentation/02-Kernel/03-Supported-devices/04-Demos/Atmel-now-Microchip/Atmel_SAMV7_Cortex-M7_RTOS_Demo#DemoApp][simple blinky demo]] with IDE support for Atmel studio, Keil, and IAR.
+
+After some time trying to configure the board using the previously installed microchip IDE's I moved over to trying to use Keil's editor.
+This also proved troublesome but moreso because it required either windows or wine support, the former would be antithetical to my disposition and the later seemed difficult.
+
+While researching alternatives I came to a deeper understanding of Keil's toolchain support and integration with [[https://github.com/Open-CMSIS-Pack][Open-CMSIS-Pack]].
+Simply put Open-CMSIS-Pack is an NXP driven project which provides a set of specs, standards and tools for configuring and maintaining the HAL for a wide variety of devices.
+
+[[file:.org_resources/cbuild-workflow.png]]
+
+This seems like a good long term/production grade solution but for now I'll try to get the existing IDEs to work since our config is not likely to vary much in the near term.
+
+It is worth noting that Keil seems to leverage this as it's software packs are referred to as "csolutions" which is an Open-CMSIS-Pack concept.
+
+After some further research I found [[https://github.com/au5ton/KeilForDocker][a repo describing how to run keil using wine in docker]]. It leverages [[https://github.com/scottyhardy/docker-wine][a separate project]] which essentially sets up wine/winetricks with a set of sane configurations and manages the wine info really well.
+
+This honestly makes the experience of using wine actually kind of good. I'll have to re-install harmony, mplab, and keil and see if that solves my previous issues.
+
+NOTE for keil's license
+License Agreement MDK v5.41 and above
+"Non-Commercial Use License" means an evaluation, preview, beta, pre-release, pilot, academic, educational or community use only license.
