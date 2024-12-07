@@ -84,6 +84,111 @@ After some further research I found [[https://github.com/au5ton/KeilForDocker][a
 
 This honestly makes the experience of using wine actually kind of good. I'll have to re-install harmony, mplab, and keil and see if that solves my previous issues.
 
-NOTE for keil's license
-License Agreement MDK v5.41 and above
-"Non-Commercial Use License" means an evaluation, preview, beta, pre-release, pilot, academic, educational or community use only license.
+** Running Blinky Demo with Keil's  µVision
+
+After adding [[https://github.com/scottyhardy/docker-wine][docker-wine]] as a submodule to this project I added some commands to the ~run.sh~ script to support interacting with the docker image. I may end up created a derived docker image later but for now this seems like a pragematic approach.
+
+NOTE I did run into a few snags along the way, namely when trying to script the installation of keil based of of the [[https://github.com/au5ton/KeilForDocker/issues][KeilForDocker] I found that after switching from the default ~wineuser~ user to the hosts's user with the ~--as-me~ flag I got this output:
+
+#+begin_src bash
+ERROR: User's home '/home/reggiemarr' is currently owned by UNKNOWN:UNKNOWN
+Use option --force-owner to enable user reggiemarr to take ownership
+#+end_src
+
+After applying that flag I found that µVision's pack installer was unable to reach the internet.
+I was able to use a workaround; Namely downloading the pack files manually and then copying them to a mounted folder so that µVision would be able to import them however at that time I hadn't known that the source of the error was the ~--force-owner~ flag so I spent some time debugging that. After removing the flag I was able to install the IDE using the following steps:
+
+1. Pull in the docker image and download the latest evaluation version of [[https://www.arm.com/products/development-tools/embedded-and-software/keil-mdk][MDK]] (v5.41 at time of writing).
+   This can be done using the ~./run.sh build keil-cfg~ command and the output should resemble something like this:
+   #+begin_src bash
+   fprime-atmel-sam-reference on  main [!⇡]
+   ❯ ./run.sh build keil-cfg
+   bash /home/reggiemarr/Projects/fprime-atmel-sam-reference/libs/docker-wine/docker-wine --as-me --volume=/home/reggiemarr/Projects/fprime-atmel-sam-reference:/home/reggiemarr/fprime-atmel-sam-reference   wget https://armkeil.blob.core.windows.net/eval/MDK541.EXE -P /home/reggiemarr/.wine/drive_c/users/reggiemarr/Downloads
+   INFO: pulseaudio not installed so running without sound
+   latest: Pulling from scottyhardy/docker-wine
+   d9802f032d67: Pull complete
+   db00ac4c6a92: Pull complete
+   efbd506b993d: Pull complete
+   8c509df97d50: Pull complete
+   df1b72a1c833: Pull complete
+   5172b388b864: Pull complete
+   df0dc114d187: Pull complete
+   7c006199b1e6: Pull complete
+   e948126fe326: Pull complete
+   d1326b32f3a0: Pull complete
+   382718e0361d: Pull complete
+   40f4aa84602e: Pull complete
+   0cbeb812dc7c: Pull complete
+   Digest: sha256:10ace77b523a8a7860bfc1a6d83d132101321f8a1648a58a5ee5c090ba5462f6
+   Status: Downloaded newer image for scottyhardy/docker-wine:latest
+   docker.io/scottyhardy/docker-wine:latest
+   INFO: Creating Docker volume container 'winehome'...
+   winehome
+   --2024-12-07 13:50:32--  https://armkeil.blob.core.windows.net/eval/MDK541.EXE
+   Resolving armkeil.blob.core.windows.net (armkeil.blob.core.windows.net)... 20.209.15.139
+   Connecting to armkeil.blob.core.windows.net (armkeil.blob.core.windows.net)|20.209.15.139|:443... connected.
+   HTTP request sent, awaiting response... 200 OK
+   Length: 900844464 (859M) [application/x-msdownload]
+   Saving to: ‘/home/reggiemarr/.wine/drive_c/users/reggiemarr/Downloads/MDK541.EXE’
+
+   MDK541.EXE                    100%[==============================================>] 859.11M  3.03MB/s    in 5m 44s
+
+   2024-12-07 13:56:17 (2.50 MB/s) - ‘/home/reggiemarr/.wine/drive_c/users/reggiemarr/Downloads/MDK541.EXE’ saved [900844464/900844464]
+   #+end_src
+
+2. If successful the script will then try to execute MDK so that we can install the Keil developer pack (which includes our target IDE, µVision).
+   This requires some manual intervention in the following:
+
+   [[file:.org_resources/mdk_install1.png]]
+
+   [[file:.org_resources/mdk_install2_license_screen.png]]
+
+   Note that we are using this for evaluation purposes only, not product ready development.
+
+   [[file:.org_resources/mdk_install3_complete.png]]
+
+   This indicates successful completion of the install.
+
+   NOTE that in the ~KeilForDocker~ project they noted that sometimes the last step would fail which would require the need to patch the ~TOOLS.ini~ file with something like this:
+   ~RTEPATH="C:\Keil_v5\ARM\PACK"~ (the path may be different and should be indicated when initially installing MDK).
+
+3. After successfully installing the IDE we now need to run it with this command: ~./run.sh exec keil-cfg~.
+   A successful install should mean that µVision opens and from there we should be able to click on the "Pack installer icon" indicated in the bottom right corner here:
+  [[file:.org_resources/uv_pack_installer_icon.png]]
+
+  Following that a dialog screen will appear, it will attempt to pull the latest [[https://www.keil.arm.com/packs/][CSMIS Packs]], after which the screen should be similar to this (note the ~ONLINE~ indication at the bottom right corner):
+
+  [[file:.org_resources/uv_pack_installer.png]]
+
+
+4. We can now leverage µVision to run the [[https://www.freertos.org/Documentation/02-Kernel/03-Supported-devices/04-Demos/Atmel-now-Microchip/Atmel_SAMV7_Cortex-M7_RTOS_Demo#DemoApp][FreeRTOS SamV71 demo]] with the following steps:
+
+   #+begin_quote
+        *Building and executing the demo application - Keil*
+        1. Open the project file FreeRTOS/Demo/CORTEX_M7_SAMV71_Xplained_IAR_Keil/RTOSDemo.uvprojx from within the Keil uVision IDE.
+        2. Open main.c, and set mainCREATE_SIMPLE_BLINKY_DEMO_ONLY to generate either the simply blinky demo, or the full test and demo application, as required.
+        3. Ensure the target hardware is connected to the host computer using a suitable debugger interface - the demo was developed and debugged using a J-Link.
+        4. Select 'Build Target' from the IDE's 'Project' menu, the RTOSDemo project should build without any errors or warnings.
+        5. After the build completes, select 'Start/Stop Debug Session' from the IDE's 'Debug' menu to program the Cortex-M7 microcontroller, start a debug session, and have the debugger break on entry into the main() function.
+   #+end_quote
+
+   Since the FreeRTOS repo is a submodule to this subproject and the ~run.sh~ script mounts the project onto the docker-wine container we can open it at ~Z:\home\reggiemarr\fprime-atmel-sam-reference\libs\FreeRTOS\FreeRTOS\Demo\CORTEX_M7_SAMV71_Xplained_IAR_Keil/RTOSDemo.uvoptx~.
+   Previous to this I had already installed the neccessary packs however you can do so now through the "Pack Installer" or the "Select Software Packs" icons.
+
+   We can then apply the following diff:
+   #+begin_src c
+   modified   FreeRTOS/Demo/CORTEX_M7_SAMV71_Xplained_IAR_Keil/main.c
+   @@ -58,7 +58,7 @@
+   
+   /* Set mainCREATE_SIMPLE_BLINKY_DEMO_ONLY to one to run the simple blinky demo,
+   * or 0 to run the more comprehensive test and demo application. */
+   -#define mainCREATE_SIMPLE_BLINKY_DEMO_ONLY    0
+   +#define mainCREATE_SIMPLE_BLINKY_DEMO_ONLY    1
+   
+   /*-----------------------------------------------------------*/
+   
+   #+end_src
+
+   And then, prior to building, we ensure the target settings are configured as such (otherwise µVision complains that the compiler is missing)
+
+  [[file:.org_resources/target_settings.png]]
