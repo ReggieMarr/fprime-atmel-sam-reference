@@ -160,6 +160,9 @@ case $1 in
       "keil-cfg")
         keil_exec "build"
       ;;
+      "harmony-cfg")
+        keil_exec "build"
+      ;;
       "docker")
         if ! git diff-index --quiet HEAD --; then
             read -p "You have unstaged changes. Continue? (y/n) " -n 1 -r

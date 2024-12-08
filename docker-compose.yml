@@ -4,6 +4,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    network_mode: host   # uses the host's network stack
+    network_mode: host
     volumes:
-      - ./:/freeSAM
+      - ./:$WDIR
