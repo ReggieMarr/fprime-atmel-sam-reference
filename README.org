@@ -186,9 +186,17 @@ I was able to use a workaround; Namely downloading the pack files manually and t
    +#define mainCREATE_SIMPLE_BLINKY_DEMO_ONLY    1
    
    /*-----------------------------------------------------------*/
-   
    #+end_src
 
-   And then, prior to building, we ensure the target settings are configured as such (otherwise µVision complains that the compiler is missing)
+   And then, prior to building, we need to set the target compiler (the default seems to be to select one that µVision doesn't include by default).
+   So configure the target settings as such:
 
-  [[file:.org_resources/target_settings.png]]
+   [[file:.org_resources/target_settings.png]]
+
+   Note we're missing the device specific pack which can be downloaded with these
+
+Microchip SAMV71 Series Device Support (4.10.230)
+   wget https://packs.download.microchip.com/Microchip.SAMV71_DFP.4.10.230.atpack
+
+Atmel SAMV71 Series Device Support (3.0.214)
+   wget http://packs.download.atmel.com/Atmel.SAMV71_DFP.3.0.214.atpack
