@@ -7,3 +7,31 @@ services:
     network_mode: host
     volumes:
       - ./:$WDIR
+
+  mplab:
+    image: $SAM_IMG
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      # MPLab uses Qt framework and will crash without this
+      - DISPLAY=$DISPLAY
+      # - QT_X11_NO_MITSHM=1
+      # # Add this for X authority
+      # - XAUTHORITY=/home/user/.Xauthority
+    network_mode: host
+    ipc: host
+    volumes:
+      # - ${XAUTHORITY:-~/.Xauthority}:/home/user/.Xauthority:ro
+      - /dev/bus/usb:/dev/bus/usb
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - ./:$WDIR
+      - ./deps/.mplab/.cache:/home/user/.cache
+      - ./deps/.mplab/.java:/home/user/.java
+      - ./deps/.mplab/.mcc:/home/user/.mcc
+      - ./deps/.mplab/.mchp_cm:/home/user/.mchp_cm
+      - ./deps/.mplab/.mchp_docs:/home/user/.mchp_docs
+      - ./deps/.mplab/.mchp_packs:/home/user/.mchp_packs
+      - ./deps/.mplab/.mplab_ide:/home/user/.mplab_ide
+      - ./deps/.mplab/MPLABXProjects:/home/user/MPLABProjects
+      - ./deps/.mplab/tools:/home/user/tools

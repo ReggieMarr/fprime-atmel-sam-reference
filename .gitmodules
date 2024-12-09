@@ -7,3 +7,6 @@
 [submodule "libs/docker-wine"]
 	path = deps/docker-wine
 	url = https://github.com/scottyhardy/docker-wine.git
+[submodule "deps/micro-sam-ba"]
+	path = deps/micro-sam-ba
+	url = https://github.com/atmelcorp/micro-sam-ba.git
