@@ -7,7 +7,7 @@ RUN apt-get update && \
     apt-get install -y \
         sudo build-essential git cmake wget curl rsync libpython3-dev \
         python3-full python3-dev python3-wheel python3-pip pipx \
-        udev gdbserver libusb-1.0-0 && \
+        udev gdbserver && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -33,6 +33,16 @@ RUN groupadd -f dialout && \
 FROM user-setup AS mplab-setup
 ENV MPLABX_VERSION=6.20
 WORKDIR /tmp
+
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -y \
+    libusb-1.0-0 \
+    default-jdk \
+    default-jre \
+    libxtst6 \
+    libxrender1 \
+    libxi6
 
 # Download and extract MPLAB X
 RUN curl -qgb "" -fLC - --retry 3 --retry-delay 3 \

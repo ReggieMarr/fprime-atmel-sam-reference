@@ -37,7 +37,7 @@ This serves as a basic application which can provides application level control 
 
 ** Project Structure
 - =Base/= : Base application source files.
-- =libs/= : Dependencies provided as submodules
+- =deps/= : Dependencies provided as submodules
 - =build/= : Build output directory.
 - =run.sh= : Primary entry point for this project
 - =README.org= : This documentation.
@@ -103,7 +103,7 @@ I was able to use a workaround; Namely downloading the pack files manually and t
    #+begin_src bash
    fprime-atmel-sam-reference on  main [!⇡]
    ❯ ./run.sh build keil-cfg
-   bash /home/reggiemarr/Projects/fprime-atmel-sam-reference/libs/docker-wine/docker-wine --as-me --volume=/home/reggiemarr/Projects/fprime-atmel-sam-reference:/home/reggiemarr/fprime-atmel-sam-reference   wget https://armkeil.blob.core.windows.net/eval/MDK541.EXE -P /home/reggiemarr/.wine/drive_c/users/reggiemarr/Downloads
+   bash /home/reggiemarr/Projects/fprime-atmel-sam-reference/deps/docker-wine/docker-wine --as-me --volume=/home/reggiemarr/Projects/fprime-atmel-sam-reference:/home/reggiemarr/fprime-atmel-sam-reference   wget https://armkeil.blob.core.windows.net/eval/MDK541.EXE -P /home/reggiemarr/.wine/drive_c/users/reggiemarr/Downloads
    INFO: pulseaudio not installed so running without sound
    latest: Pulling from scottyhardy/docker-wine
    d9802f032d67: Pull complete
@@ -172,7 +172,7 @@ I was able to use a workaround; Namely downloading the pack files manually and t
         5. After the build completes, select 'Start/Stop Debug Session' from the IDE's 'Debug' menu to program the Cortex-M7 microcontroller, start a debug session, and have the debugger break on entry into the main() function.
    #+end_quote
 
-   Since the FreeRTOS repo is a submodule to this subproject and the ~run.sh~ script mounts the project onto the docker-wine container we can open it at ~Z:\home\reggiemarr\fprime-atmel-sam-reference\libs\FreeRTOS\FreeRTOS\Demo\CORTEX_M7_SAMV71_Xplained_IAR_Keil/RTOSDemo.uvoptx~.
+   Since the FreeRTOS repo is a submodule to this subproject and the ~run.sh~ script mounts the project onto the docker-wine container we can open it at ~Z:\home\reggiemarr\fprime-atmel-sam-reference\deps\FreeRTOS\FreeRTOS\Demo\CORTEX_M7_SAMV71_Xplained_IAR_Keil/RTOSDemo.uvoptx~.
    Previous to this I had already installed the neccessary packs however you can do so now through the "Pack Installer" or the "Select Software Packs" icons.
 
    We can then apply the following diff:

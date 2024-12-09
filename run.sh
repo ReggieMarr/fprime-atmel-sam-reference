@@ -56,10 +56,13 @@ Commands:
 EOF
 }
 
-# Initialize flags
+# Default values
+DEFAULT_SERVICE="sam"
+DEFAULT_FLAGS="-it --rm"
 CLEAN=0
+
 exec_cmd() {
-    local cmd="$1"
+    cmd="$1"
     echo "$cmd"
     eval "$cmd"
     exit_code=$?
@@ -69,10 +72,51 @@ exec_cmd() {
     fi
 }
 
+# A DWIM function, interprets the arguments passed to it contextually
 run_docker_compose() {
-    local cmd="$1"
-    local flags="${2:- -it --rm}"
-    exec_cmd "docker compose run $flags $cmd"
+    # Get list of services from docker-compose.yml
+    # Get list of services from docker-compose.yml and clean up the output
+    SERVICES=$(docker compose config --services | sed 's/^[0-9]*://')
+    service="$DEFAULT_SERVICE"
+    command=""
+    flags="$DEFAULT_FLAGS"
+
+    # Process arguments
+    parsing_flags=false
+    found_service=false
+
+    for arg in "$@"; do
+        # If we haven't found a service yet, check if this is a valid service
+        if [ "$found_service" = false ] && echo "$SERVICES" | grep -q "^${arg}$"; then
+            service="$arg"
+            found_service=true
+            continue
+        fi
+
+        # If we get here, this must be part of the command
+        if [ -z "$command" ]; then
+            command="$arg"
+        else
+            command="$command $arg"
+        fi
+
+        # Check if this argument starts with a dash
+        if [[ "$arg" == -* ]]; then
+            parsing_flags=true
+            flags="$arg"
+            continue
+        fi
+
+        # Check if we're already parsing flags
+        if [ "$parsing_flags" = true ]; then
+            flags="$flags $arg"
+            continue
+        fi
+    done
+
+    # Construct and execute the command
+    docker_cmd="docker compose run $flags $service $command"
+    exec_cmd "$docker_cmd"
 }
 
 wine_exec() {
@@ -91,7 +135,7 @@ wine_exec() {
     # after removing this flag, removing the volume/docker image and re-building fresh.
     # flags+="--force-owner"
 
-    base_cmd="bash ${SCRIPT_DIR}/libs/docker-wine/docker-wine ${flags} "
+    base_cmd="bash ${SCRIPT_DIR}/deps/docker-wine/docker-wine ${flags} "
     cmd="$base_cmd $BASE_COMMAND"
 
     exec_cmd "$cmd"
@@ -138,6 +182,15 @@ keil_exec() {
     esac
 }
 
+mplab_exec() {
+    BASE_COMMAND=${1:-}
+    [ -z "$BASE_COMMAND" ] && { echo "Error: must specify base command"; exit 1; }
+    BASE_COMMAND="mplab $BASE_COMMAND"
+
+    xhost +local:docker
+    run_docker_compose $BASE_COMMAND
+}
+
 # Process flags
 for arg in "$@"; do
     case $arg in
@@ -158,9 +211,6 @@ case $1 in
         exit 1
       ;;
       "keil-cfg")
-        keil_exec "build"
-      ;;
-      "harmony-cfg")
         keil_exec "build"
       ;;
       "docker")
@@ -207,6 +257,9 @@ case $1 in
       "keil-cfg")
         keil_exec "uv"
       ;;
+      "mplab-cfg")
+        mplab_exec "mplab_ide"
+      ;;
       "base")
         echo "Not yet supported"
         exit 1
@@ -229,8 +282,11 @@ case $1 in
             "wine")
               wine_exec "bash"
           ;;
+            "mplab")
+            run_docker_compose $INSPECT_TARGET "bash"
+          ;;
             "sam")
-            run_docker_compose "$INSPECT_TARGET bash"
+            run_docker_compose $INSPECT_TARGET "bash"
           ;;
           *)
           echo "Invalid inspect target: ${INSPECT_TARGET}"
