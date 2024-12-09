@@ -1,9 +1,9 @@
 [submodule "libs/FreeRTOS"]
-	path = libs/FreeRTOS
+	path = deps/FreeRTOS
 	url = https://github.com/FreeRTOS/FreeRTOS.git
 [submodule "libs/mplab_event_recorder"]
-	path = libs/mplab_event_recorder
+	path = deps/mplab_event_recorder
 	url = https://github.com/Microchip-MPLAB-Harmony/mplab_event_recorder.git
 [submodule "libs/docker-wine"]
-	path = libs/docker-wine
+	path = deps/docker-wine
 	url = https://github.com/scottyhardy/docker-wine.git
