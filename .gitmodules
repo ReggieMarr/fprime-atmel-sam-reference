@@ -10,3 +10,6 @@
 [submodule "deps/micro-sam-ba"]
 	path = deps/micro-sam-ba
 	url = https://github.com/atmelcorp/micro-sam-ba.git
+[submodule "deps/mplab_dev_packs"]
+	path = deps/mplab_dev_packs
+	url = https://github.com/Microchip-MPLAB-Harmony/dev_packs.git

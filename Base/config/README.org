@@ -1,0 +1,68 @@
+* Configuration Directory Structure
+This directory contains configuration files from various sources, organized to support
+our SAMV71 project.
+
+** Directory Layout
+#+BEGIN_EXAMPLE
+config/
+├── third_party/
+│   ├── harmony/           # Auto-generated files from MPLAB X IDE/Harmony
+│   │   ├── peripheral/    # Peripheral configurations
+│   │   ├── system/       # System configuration files
+│   │   └── definitions.h  # Harmony-generated definitions
+│   └── rtos/              # FreeRTOS configuration files
+│       ├── FreeRTOSConfig.h
+│       └── hooks/         # RTOS callback implementations
+#+END_EXAMPLE
+
+** File Origins and Usage
+
+*** Harmony Generated Code
+Located in =third_party/harmony/=
+- Source: MPLAB X IDE with Harmony 3 Framework
+- Generation Method: MPLAB X IDE's MCC (MPLAB Code Configurator)
+- Version: [Insert Harmony version used]
+- Purpose: Provides peripheral initialization and hardware abstraction
+
+*Important Note:* These files are copied from a reference Harmony project and should
+not be directly modified. Any necessary changes should be made in the original
+MPLAB X project and then copied here.
+
+**** Key Files
+- =definitions.h=: Main configuration header
+- =peripheral/=: Contains peripheral-specific initialization code
+- =system/=: System-level configurations
+
+*** RTOS Configuration
+Located in =third_party/rtos/=
+- Source: FreeRTOS [Insert version]
+- Purpose: RTOS configuration and callback implementations
+
+**** Key Files
+- =FreeRTOSConfig.h=: Main RTOS configuration
+- =hooks/=: Contains implementations for:
+  - Malloc failed hook
+  - Stack overflow hook
+  - Idle hook
+  - Tick hook
+
+** Updating Configuration Files
+
+*** Harmony Updates
+To update Harmony-generated files:
+1. Make changes in MPLAB X IDE project
+2. Generate code using MCC
+3. Copy relevant files to =third_party/harmony/=
+4. Document changes in git commit
+
+*** RTOS Updates
+FreeRTOS configurations should be modified directly in =third_party/rtos/=
+Remember to:
+1. Test changes thoroughly
+2. Document any modifications to default configurations
+3. Update this README if new hooks or features are added
+
+** References
+- [[https://www.microchip.com/en-us/tools-resources/configure/mplab-harmony][MPLAB Harmony v3]]
+- [[https://www.freertos.org/a00110.html][FreeRTOS Configuration]]
+- [[https://ww1.microchip.com/downloads/en/DeviceDoc/SAM-V71-Series-DataSheet-DS60001527C.pdf][SAMV71 Datasheet]]

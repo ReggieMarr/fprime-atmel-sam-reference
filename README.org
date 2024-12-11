@@ -253,3 +253,38 @@ openocd -d3 -f samv71.cfg
 - EDBG (Embedded Debugger) is used via CMSIS-DAP interface
 - Default configuration files are in ~/usr/share/openocd/scripts/~
 - Successful connection will show debugger initialization messages
+
+* FreeRTOS config
+| Feature                  | ACUBESAT (1st) | LLM Generated (2nd) | ASF (3rd)     |
+|--------------------------+----------------+---------------------+---------------|
+| Stack Size (minimal)     | 128            | 1000                | 256           |
+| Heap Size                | 40960          | 40980               | 47104         |
+| Task Name Length         | 16             | 25                  | 8             |
+| Static Allocation        | No             | Yes                 | Not Defined   |
+| Timer Support            | No             | No                  | Yes           |
+| Queue Registry Size      | 0              | 5                   | 0             |
+| Runtime Stats            | No             | Yes                 | Optional      |
+| Task Selection           | Optimized      | Optimized           | Not Optimized |
+| Interrupt Priority Setup | Basic          | Basic               | Detailed      |
+
+* ACUBESAT Configuration
+The first configuration represents a minimalist approach focused on space applications.
+It prioritizes memory efficiency with smaller stack sizes and disabled features like
+timers and static allocation. The configuration maintains essential RTOS functionality
+while minimizing overhead, which is crucial for space-grade applications where
+resources are constrained and reliability is paramount.
+
+* LLM Generated Configuration
+This configuration takes a more debug-oriented approach, with larger stack sizes and
+enabled runtime statistics. It includes additional features like queue registry and
+static allocation support. The configuration appears to be optimized for development
+and testing phases, where monitoring and debugging capabilities are prioritized over
+memory efficiency.
+
+* ASF Configuration
+The Atmel Software Framework configuration provides the most structured and
+comprehensive setup. It includes detailed interrupt priority management, timer
+support, and extensive configuration options. The configuration is well-documented
+and IDE-friendly, making it suitable for complex commercial applications. It
+strikes a balance between feature availability and resource usage, while providing
+better development support through its organized structure and documentation.

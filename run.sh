@@ -61,6 +61,14 @@ DEFAULT_SERVICE="sam"
 DEFAULT_FLAGS="-it --rm"
 CLEAN=0
 
+# Process flags
+for arg in "$@"; do
+    case $arg in
+        --clean) CLEAN=1 ;;
+        --help) show_help; exit 0 ;;
+    esac
+done
+
 exec_cmd() {
     cmd="$1"
     echo "$cmd"
@@ -74,48 +82,45 @@ exec_cmd() {
 
 # A DWIM function, interprets the arguments passed to it contextually
 run_docker_compose() {
-    # Get list of services from docker-compose.yml
     # Get list of services from docker-compose.yml and clean up the output
     SERVICES=$(docker compose config --services | sed 's/^[0-9]*://')
+
+    # Default values
     service="$DEFAULT_SERVICE"
     command=""
     flags="$DEFAULT_FLAGS"
 
-    # Process arguments
-    parsing_flags=false
-    found_service=false
-
-    for arg in "$@"; do
-        # If we haven't found a service yet, check if this is a valid service
-        if [ "$found_service" = false ] && echo "$SERVICES" | grep -q "^${arg}$"; then
-            service="$arg"
-            found_service=true
-            continue
-        fi
-
-        # If we get here, this must be part of the command
-        if [ -z "$command" ]; then
-            command="$arg"
-        else
-            command="$command $arg"
-        fi
-
-        # Check if this argument starts with a dash
-        if [[ "$arg" == -* ]]; then
-            parsing_flags=true
-            flags="$arg"
-            continue
-        fi
-
-        # Check if we're already parsing flags
-        if [ "$parsing_flags" = true ]; then
-            flags="$flags $arg"
-            continue
-        fi
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --service=*)
+                service="${1#*=}"
+                shift
+                ;;
+            --)
+                shift
+                # Everything after -- becomes and overwrites the flags
+                flags=$*
+                break
+                ;;
+            *)
+                if [ -z "$command" ]; then
+                    command="$1"
+                else
+                    command="$command $1"
+                fi
+                shift
+                ;;
+        esac
     done
 
+    # Validate service
+    if ! echo "$SERVICES" | grep -q "^${service}$"; then
+        echo "Invalid service: $service, not found in $SERVICES"
+        return 1
+    fi
+
     # Construct and execute the command
-    docker_cmd="docker compose run $flags $service $command"
+    docker_cmd="docker compose run $flags $service bash -c \"$command\""
     exec_cmd "$docker_cmd"
 }
 
@@ -128,7 +133,7 @@ wine_exec() {
     # FIXME the network doesn't seem to connect,
     # this was not a problem when previously following the "KeilDocker" tutorial which used MDK v5.31
     flags="--as-me "
-    flags+="--volume=$SCRIPT_DIR:$HOME$WDIR "
+    flags+="--volume=$SCRIPT_DIR:$HOME$SAM_WDIR "
 
     # NOTE This seemed to be required after switching users however after doing so keil was unable to
     # connect to the internet. It's not well understood why this was the case but the issue was resolved
@@ -220,19 +225,10 @@ ateml_exec() {
 mplab_exec() {
     BASE_COMMAND=${1:-}
     [ -z "$BASE_COMMAND" ] && { echo "Error: must specify base command"; exit 1; }
-    BASE_COMMAND="mplab $BASE_COMMAND"
 
     xhost +local:docker
-    run_docker_compose $BASE_COMMAND
+    run_docker_compose $BASE_COMMAND --service="mplab"
 }
-
-# Process flags
-for arg in "$@"; do
-    case $arg in
-        --clean) CLEAN=1 ;;
-        --help) show_help; exit 0 ;;
-    esac
-done
 
 case $1 in
 
@@ -241,9 +237,13 @@ case $1 in
     [ -z "$EXEC_TARGET" ] && { echo "Error: must specify target to exec"; exit 1; }
 
     case $EXEC_TARGET in
-      "base")
-        echo "Not yet supported"
-        exit 1
+      "Base")
+        cmd="cmake .. && make VERBOSE=3"
+        [ "$CLEAN" -eq 1 ] && cmd="rm -rf ../build/* && $cmd"
+
+        flags="-w $SAM_BASE_DIR/build $DEFAULT_FLAGS"
+
+        run_docker_compose $cmd --service="sam" -- $flags
       ;;
       "keil-cfg")
         keil_exec "build"
@@ -321,10 +321,10 @@ case $1 in
               wine_exec "bash"
           ;;
             "mplab")
-            run_docker_compose $INSPECT_TARGET "bash"
-          ;;
+              # Fall through, all these case are the same.
+          ;&
             "sam")
-            run_docker_compose $INSPECT_TARGET "bash"
+            run_docker_compose "bash" --service=$INSPECT_TARGET
           ;;
           *)
           echo "Invalid inspect target: ${INSPECT_TARGET}"

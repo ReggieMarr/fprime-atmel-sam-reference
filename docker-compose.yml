@@ -6,7 +6,7 @@ services:
       dockerfile: Dockerfile
     network_mode: host
     volumes:
-      - ./:$WDIR
+      - ./:$SAM_WDIR
 
   mplab:
     image: $SAM_IMG
@@ -25,7 +25,7 @@ services:
       # - ${XAUTHORITY:-~/.Xauthority}:/home/user/.Xauthority:ro
       - /dev/bus/usb:/dev/bus/usb
       - /tmp/.X11-unix:/tmp/.X11-unix
-      - ./:$WDIR
+      - ./:$SAM_WDIR
       - ./deps/.mplab/.cache:/home/user/.cache
       - ./deps/.mplab/.java:/home/user/.java
       - ./deps/.mplab/.mcc:/home/user/.mcc
