@@ -63,9 +63,10 @@
 #include "system/dma/sys_dma.h"
 #include "osal/osal.h"
 #include "system/debug/sys_debug.h"
-#include "app_sensor_thread.h"
-#include "app_eeprom_thread.h"
-#include "app_user_input_thread.h"
+// NOTE manually removed
+/* #include "app_sensor_thread.h" */
+/* #include "app_eeprom_thread.h" */
+/* #include "app_user_input_thread.h" */
 
 
 

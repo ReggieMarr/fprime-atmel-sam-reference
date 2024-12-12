@@ -238,12 +238,17 @@ case $1 in
 
     case $EXEC_TARGET in
       "Base")
-        cmd="cmake .. && make VERBOSE=3"
+        cmd="cmake .. && make"
         [ "$CLEAN" -eq 1 ] && cmd="rm -rf ../build/* && $cmd"
 
         flags="-w $SAM_BASE_DIR/build $DEFAULT_FLAGS"
 
         run_docker_compose $cmd --service="sam" -- $flags
+
+        MOD_DICT_CMD="sed -i \"s|${SAM_WDIR}|${SCRIPT_DIR}|g\" \"${SCRIPT_DIR}/Base/build/compile_commands.json\""
+
+        exec_cmd "$MOD_DICT_CMD"
+
       ;;
       "keil-cfg")
         keil_exec "build"

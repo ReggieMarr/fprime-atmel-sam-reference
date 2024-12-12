@@ -25,7 +25,7 @@ set(ARM_PACK_INCLUDES
     ${ARM_PACK_DIR}/CMSIS/Core/Include
 )
 
-set(ARM_PACK_STARTUP_LD_OPTS
+set(ARM_PACK_STARTUP_LINKER_FLAGS
     -T${ARM_PACK_DEV_DIR}/Source/GCC/startup_ARMC7.ld
     -Wl,--print-memory-usage
     -Wl,--gc-sections
@@ -52,15 +52,4 @@ set(MICROCHIP_PACK_INCLUDES
     ${MICROCHIP_PACK_DIR}/include
 )
 
-set(MICROCHIP_PACK_LD_OPTS
-    -mcpu=cortex-m7
-    -mthumb
-    -mfloat-abi=hard
-    -mfpu=fpv5-d16
-    # NOTE should should flags common to other linker/compilation commands like so
-    # ${CPU_FLAGS}
-    -Wl,--gc-sections
-    -specs=nano.specs
-    -specs=nosys.specs
-    -T${MICROCHIP_PACK_DIR}/gcc/gcc/samv71q21b_flash.ld
-)
+set(MICROCHIP_PACK_FLASH_LINKER_FLAG "-T${MICROCHIP_PACK_DIR}/gcc/gcc/samv71q21b_flash.ld")
