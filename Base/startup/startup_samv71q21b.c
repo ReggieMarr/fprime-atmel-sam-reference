@@ -1,5 +1,5 @@
 #include "sam.h"
-#include "third_party/harmony/sam_v71_xult/device_vectors.h"
+#include "device_vectors.h"
 #include "config.h"
 
 /* Initialize segments */

@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------------------
-# Basic project setup
+# Base project setup
 # -----------------------------------------------------------------------------
 cmake_minimum_required(VERSION 3.26)
 
@@ -9,9 +9,7 @@ if(ENABLE_DEBUGGING)
     set(CMAKE_VERBOSE_MAKEFILE ON)
 endif()
 
-get_filename_component(PROJECT_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../" ABSOLUTE)
-set(DEPS_ROOT "${PROJECT_ROOT}/deps")
-set(CONFIG_ROOT "${PROJECT_ROOT}/Base/config")
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/target-config.cmake)
 
 set(CMAKE_TOOLCHAIN_FILE ${PROJECT_ROOT}/Base/cmake/samv71q21b-gcc-toolchain.cmake)
 
@@ -21,21 +19,8 @@ project(base_app_${MCU_MODEL}
     LANGUAGES C CXX ASM
 )
 
-# Initialize the target sources and includes
-set(TARGET_SOURCES "")
-set(TARGET_INCLUDES "")
-
 # -----------------------------------------------------------------------------
-# Component configurations
-# -----------------------------------------------------------------------------
-verify_path(DEPS_ROOT "Dependency root")
-
-include(cmake/harmony.cmake)
-include(cmake/cmsis.cmake)
-include(cmake/FreeRTOS.cmake)
-
-# -----------------------------------------------------------------------------
-# Compiler and language settings
+# Compiler settings
 # -----------------------------------------------------------------------------
 # For details see: https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html
 set(DEFAULT_OPTIMIZATION_FLAGS "-O0")
@@ -72,7 +57,11 @@ if(ENABLE_DEBUGGING)
     set(OPTIMIZATION_FLAGS ${DEBUG_OPTIMIZATION_FLAGS})
 else()
     # Debugging isn't enabled so apply flags based on optimization desired.
-    set(OPTIMIZATION_FLAGS ${ENABLE_OPTIMIZATION} ? ${RELEASE_OPTIMIZATION_FLAGS} : ${DEFAULT_OPTIMIZATION_FLAGS})
+    if(ENABLE_OPTIMIZATION)
+        set(OPTIMIZATION_FLAGS ${RELEASE_OPTIMIZATION_FLAGS})
+    else()
+        set(OPTIMIZATION_FLAGS ${DEFAULT_OPTIMIZATION_FLAGS})
+    endif()
 endif()
 
 message(STATUS "Optimization flags: ${OPTIMIZATION_FLAGS}")
@@ -95,7 +84,15 @@ set(WARNING_FLAGS
     "-Wunused-function"
 )
 
-# C++ specific flags
+set(COMMON_COMPILE_FLAGS
+    -fdiagnostics-color=always
+    ${OPTIMIZATION_FLAGS}
+    ${WARNING_FLAGS})
+
+set(ASM_FLAGS ${MCU_COMPILE_FLAGS} ${COMMON_COMPILE_FLAGS})
+
+set(C_FLAGS ${MCU_COMPILE_FLAGS} ${COMMON_COMPILE_FLAGS})
+
 set(CXX_FLAGS
     # Disable C++ exception handling
     "-fno-exceptions"
@@ -103,20 +100,13 @@ set(CXX_FLAGS
     "-fno-rtti"
     # Warn about volatile usage
     "-Wvolatile"
+    ${MCU_COMPILE_FLAGS}
+    ${COMMON_COMPILE_FLAGS}
 )
 
-# Base linker flags
+# Set the linker flags based on the MCU flags set in the toolchain file
 set(LINKER_FLAGS
-    # Use newlib-nano (minimal C library)
-    "-specs=nano.specs"
-    # Minimal system calls implementation
-    "-specs=nosys.specs"
-)
-
-# Add garbage collection flag
-if(ENABLE_DEBUGGING)
-    list(APPEND LINKER_FLAGS "-Wl,--gc-sections")
-endif()
+    ${MCU_LINKER_FLAGS})
 
 # Debug-specific flags
 if(ENABLE_DEBUGGING)
@@ -125,41 +115,19 @@ if(ENABLE_DEBUGGING)
 
     # Print which sections were removed gc-sections only
     # if gc-sections is enabled and we're in debug
-    if(";${LINKER_FLAGS};" MATCHES ";-Wl,--gc-sections;")
+    if(";${OPTIMIZATION_FLAGS};" MATCHES ";-Wl,--gc-sections;")
         list(APPEND LINKER_FLAGS "-Wl,--print-gc-sections")
     endif()
 endif()
 
-if(ENABLE_DEBUGGING)
-    message(STATUS "Linker flags: ${LINKER_FLAGS}")
-endif()
-
-list(APPEND LINKER_FLAGS
-    # Linker script to align memory properly
-    ${MICROCHIP_PACK_FLASH_LINKER_FLAG}
-)
-
-# Convert to strings for global flags
-string(JOIN " " OPTIMIZATION_FLAGS_STR ${OPTIMIZATION_FLAGS})
-string(JOIN " " WARNING_FLAGS_STR ${WARNING_FLAGS})
-string(JOIN " " CXX_FLAGS_STR ${CXX_FLAGS})
-string(JOIN " " LINKER_FLAGS_STR ${LINKER_FLAGS})
-
-# Global flags
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OPTIMIZATION_FLAGS_STR} ${WARNING_FLAGS_STR}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OPTIMIZATION_FLAGS_STR} ${WARNING_FLAGS_STR} ${CXX_FLAGS_STR}")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LINKER_FLAGS_STR}")
-
-if(ENABLE_DEBUGGING)
-    message(STATUS "CMAKE_C_FLAGS: ${CMAKE_C_FLAGS}")
-    message(STATUS "CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
-    message(STATUS "CMAKE_EXE_LINKER_FLAGS: ${CMAKE_EXE_LINKER_FLAGS}")
-    message(STATUS "CMAKE_ASM_FLAGS: ${CMAKE_ASM_FLAGS}")
-endif()
-
 # -----------------------------------------------------------------------------
-# Harmony library setup
+# Startup configuration
 # -----------------------------------------------------------------------------
+
+#NOTE these could be subdirectories instead
+include(${PROJECT_ROOT}/Base/cmake/startup.cmake)
+include(${PROJECT_ROOT}/Base/cmake/harmony.cmake)
+
 add_library(harmony STATIC ${HARMONY_SOURCES})
 target_include_directories(harmony
     PRIVATE
@@ -174,13 +142,12 @@ target_compile_definitions(harmony
         ${ARM_PACK_DEFS}
         ${MICROCHIP_PACK_DEFS}
 )
-# target_compile_options(harmony
-#     PRIVATE
-# )
 
-# -----------------------------------------------------------------------------
-# FreeRTOS library setup
-# -----------------------------------------------------------------------------
+target_compile_options(harmony
+    PRIVATE
+        ${COMMON_COMPILE_FLAGS}
+)
+
 add_library(freertos STATIC ${FREERTOS_SOURCES})
 target_include_directories(freertos
     PUBLIC
@@ -189,88 +156,60 @@ target_include_directories(freertos
 
 target_compile_options(freertos
     PRIVATE
-        # ${COMMON_FLAGS}
-        ### From FreeRTOS/Source/cmake_example
-        # Gnu/Clang C Options
-        $<$<COMPILE_LANG_AND_ID:C,GNU>:-fdiagnostics-color=always>
-        $<$<COMPILE_LANG_AND_ID:C,Clang>:-fcolor-diagnostics>
-
-        $<$<COMPILE_LANG_AND_ID:C,Clang,GNU>:-Wall>
-        $<$<COMPILE_LANG_AND_ID:C,Clang,GNU>:-Wextra>
-        $<$<COMPILE_LANG_AND_ID:C,Clang,GNU>:-Wpedantic>
-        $<$<COMPILE_LANG_AND_ID:C,Clang,GNU>:-Werror>
-        $<$<COMPILE_LANG_AND_ID:C,Clang,GNU>:-Wconversion>
-        $<$<COMPILE_LANG_AND_ID:C,Clang>:-Weverything>
-
-        # Suppressions required to build clean with clang.
-        $<$<COMPILE_LANG_AND_ID:C,Clang>:-Wno-unused-macros>
-        $<$<COMPILE_LANG_AND_ID:C,Clang>:-Wno-padded>
-        $<$<COMPILE_LANG_AND_ID:C,Clang>:-Wno-missing-variable-declarations>
-        $<$<COMPILE_LANG_AND_ID:C,Clang>:-Wno-covered-switch-default>
-        $<$<COMPILE_LANG_AND_ID:C,Clang>:-Wno-cast-align>
+        ${COMMON_COMPILE_FLAGS}
 )
 
 # -----------------------------------------------------------------------------
-# Main target configuration
+# Target configuration
 # -----------------------------------------------------------------------------
-list(APPEND TARGET_SOURCES
-    ${MICROCHIP_PACK_SOURCES}
-    # ${ARM_PACK_SOURCES}
-)
+set(PROJECT_BIN ${PROJECT_NAME}.elf)
 
-list(APPEND TARGET_INCLUDES
-    ${MICROCHIP_PACK_INCLUDES}
-    ${ARM_PACK_INCLUDES}
-)
+add_executable(${PROJECT_BIN} ${PROJECT_ROOT}/Base/startup/main.cpp)
 
-# Add Custom startup sources
-list(APPEND TARGET_SOURCES
-    ${PROJECT_ROOT}/Base/config/startup_samv71q21b.c
-    ${PROJECT_ROOT}/Base/config/freeRTOS_hooks.c
-)
-
-list(APPEND TARGET_INCLUDES
-    ${PROJECT_ROOT}/Base/config
-)
-
-list(APPEND TARGET_DEFS
-    ${ARM_PACK_DEFS}
-    ${MICROCHIP_PACK_DEFS}
-)
-#   NOTE __DEBUG is a Microchip-specific define that adds some breakpoints,
-#   and triggers sys_debug and more convience factors.
-#   NOTE we may want to remove later but it's added by MPLAB X when in debug mode.
-#   so kept for now for consistency.
-if(ENABLE_DEBUGGING)
-    list(APPEND TARGET_DEFS
-        DEBUG
-        __DEBUG
-    )
-endif()
-
-# Create executable
-add_executable(${PROJECT_NAME} main.cpp)
-
-# Add sources and includes
-target_sources(${PROJECT_NAME}
+target_sources(${PROJECT_BIN}
     PRIVATE
-        ${TARGET_SOURCES}
+        ${MICROCHIP_PACK_SOURCES}
+        ${PROJECT_ROOT}/Base/startup/startup_samv71q21b.c
+        ${PROJECT_ROOT}/Base/startup/freeRTOS_hooks.c
 )
 
-target_include_directories(${PROJECT_NAME}
+target_include_directories(${PROJECT_BIN}
     PRIVATE
-        ${TARGET_INCLUDES}
+        ${MICROCHIP_PACK_INCLUDES}
+        ${ARM_PACK_INCLUDES}
+        ${HARMONY_INCLUDES}
+        ${PROJECT_ROOT}/Base/startup
 )
 
-target_compile_definitions(${PROJECT_NAME}
+target_compile_options(${PROJECT_BIN}
     PRIVATE
-        ${TARGET_DEFS}
+        $<$<COMPILE_LANGUAGE:ASM>:${ASM_FLAGS}>
+        $<$<COMPILE_LANGUAGE:C>:${C_FLAGS}>
+        $<$<COMPILE_LANGUAGE:CXX>:${CXX_FLAGS}>
 )
 
-# target_link_options(${PROJECT_NAME} PRIVATE
-# )
+target_compile_definitions(${PROJECT_BIN}
+    PRIVATE
+        ${ARM_PACK_DEFS}
+        ${MICROCHIP_PACK_DEFS}
+        $<$<BOOL:${ENABLE_DEBUGGING}>:DEBUG>
+        $<$<BOOL:${ENABLE_DEBUGGING}>:${MICROCHIP_PACK_DEBUG_DEFS}>
+)
+
+# -Map: generate a linker report (mapfile) for the program. This contains
+#   info such as memory layout, list of symbols, linked libraries etc. Useful for
+#   solving linker errors or finding who's hogging memory.
+# Refs:
+# - https://interrupt.memfault.com/blog/get-the-most-out-of-the-linker-map-file
+target_link_options(${PROJECT_BIN}
+    PRIVATE
+        ${LINKER_FLAGS}
+        ${MICROCHIP_PACK_BOOT_LINKER_SCRIPT}
+        -Wl,-Map=${PROJECT_BINARY_DIR}/${PROJECT_NAME}.map
+)
+
 # Link dependencies
-target_link_libraries(${PROJECT_NAME}
+target_link_libraries(${PROJECT_BIN}
     PRIVATE
         freertos
         harmony
@@ -282,9 +221,9 @@ target_link_libraries(${PROJECT_NAME}
 
 # Add memory layout information to build
 if (CMAKE_VERBOSE_MAKEFILE)
-    add_custom_command(TARGET ${PROJECT_NAME}
+    add_custom_command(TARGET ${PROJECT_BIN}
         POST_BUILD
-            COMMAND ${CMAKE_SIZE} --format=berkeley ${PROJECT_NAME}
-            COMMAND ${CMAKE_OBJDUMP} -h ${PROJECT_NAME}
+            COMMAND ${CMAKE_SIZE} --format=berkeley ${PROJECT_BIN}
+            COMMAND ${CMAKE_OBJDUMP} -h ${PROJECT_BIN}
     )
 endif()

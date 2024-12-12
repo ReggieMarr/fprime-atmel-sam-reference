@@ -1,4 +1,5 @@
-set(HARMONY_DIR ${PROJECT_ROOT}/Base/config/third_party/harmony/sam_v71_xult)
+set(HARMONY_DIR ${PROJECT_ROOT}/Base/third_party/harmony/sam_v71_xult)
+verify_path(HARMONY_DIR "Harmony generated files")
 
 set(HARMONY_SOURCES
     # Core files

@@ -238,7 +238,7 @@ case $1 in
 
     case $EXEC_TARGET in
       "Base")
-        cmd="cmake .. && make"
+        cmd="cmake -DENABLE_DEBUGGING=ON .. && make"
         [ "$CLEAN" -eq 1 ] && cmd="rm -rf ../build/* && $cmd"
 
         flags="-w $SAM_BASE_DIR/build $DEFAULT_FLAGS"
