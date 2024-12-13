@@ -25,9 +25,6 @@ set(ARM_PACK_INCLUDES
     ${ARM_PACK_DIR}/CMSIS/Core/Include
 )
 
-# -Wl,--defsym=__STACK_SIZE=0x2000
-# -Wl,--defsym=__HEAP_SIZE=0x1000
-# -Wl,--defsym=__ROM_BASE=0x00400000
 set(ARM_PACK_BOOT_LINKER_SCRIPT
     -T${ARM_PACK_DEV_DIR}/Source/GCC/startup_ARMC7.ld)
 
@@ -43,6 +40,7 @@ verify_path(MICROCHIP_PACK_DIR "Microchip SAM pack")
 set(MICROCHIP_PACK_SOURCES
     ${MICROCHIP_PACK_DIR}/gcc/system_samv71q21b.c
     # ${MICROCHIP_PACK_DIR}/gcc/gcc/startup_samv71q21b.c
+    # ${MICROCHIP_PACK_DIR}/x32/gcc/startup_samv71q21b.c
 )
 
 set(MICROCHIP_PACK_INCLUDES
@@ -117,16 +115,20 @@ set(MICROCHIP_PACK_INCLUDES
 #     learn about ELF files and get used to the symbols/terminology (ref
 #     linker script tutorial)
 set(MICROCHIP_PACK_BOOT_LINKER_SCRIPT
-    -Wl,-T${MICROCHIP_PACK_DIR}/gcc/gcc/samv71q21b_flash.ld
-    #  - --defsym=__bss_start__/__bss_end__: The newlib-nano port included with GCC requires definitions for the
-    #    symbols denoting the start and end of .bss section, named __bss_start__ and __bss_end__ respectively.
-    #    The corresponding symbols in the startup file and linker script are _sbss and _ebss, and the mismatch
-    #    causes a linker error, which is fixed by defining the symbols to whatever the linker script is already using.
-    #  - --defsym=end: The default implementation of _sbrk that comes with libnosys requires a linker-defined symbol
-    #    named 'end'. By convention heap grows upwards thus its end is initially located at the *first* address of the heap space,
-    #    which corresponds to the _sheap symbol in the linker script.
-    -Wl,--defsym=__bss_start__=_sbss -Wl,--defsym=__bss_end__=_ebss -Wl,--defsym=end=_sheap
-)
+    -Wl,-T${PROJECT_ROOT}/Base/startup/startup_samv71q21b.ld)
+
+# set(MICROCHIP_PACK_BOOT_LINKER_SCRIPT #
+#     -Wl,-T${MICROCHIP_PACK_DIR}/gcc/gcc/samv71q21b_flash.ld
+#     #  - --defsym=__bss_start__/__bss_end__: The newlib-nano port included with GCC requires definitions for the
+#     #    symbols denoting the start and end of .bss section, named __bss_start__ and __bss_end__ respectively.
+#     #    The corresponding symbols in the startup file and linker script are _sbss and _ebss, and the mismatch
+#     #    causes a linker error, which is fixed by defining the symbols to whatever the linker script is already using.
+#     #  - --defsym=end: The default implementation of _sbrk that comes with libnosys requires a linker-defined symbol
+#     #    named 'end'. By convention heap grows upwards thus its end is initially located at the *first* address of the heap space,
+#     #    which corresponds to the _sheap symbol in the linker script.
+#     -Wl,--defsym=__bss_start__=_sbss -Wl,--defsym=__bss_end__=_ebss -Wl,--defsym=end=_sheap
+#     -Wl,--entry=Reset_Handler
+# )
 
 #   NOTE __DEBUG is a Microchip-specific define that adds some breakpoints,
 #   and triggers sys_debug and more convience factors.

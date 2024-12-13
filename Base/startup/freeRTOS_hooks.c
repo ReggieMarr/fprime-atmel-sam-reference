@@ -1,5 +1,5 @@
 #include "FreeRTOS.h"
-#include "config.h"
+#include "startup_samv71q21b.h"
 #include "sam.h"
 
 // Runtime statistics variables
