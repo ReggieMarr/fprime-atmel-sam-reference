@@ -46,6 +46,10 @@ RUN groupadd -f dialout && \
     usermod -a -G dialout user && \
     echo 'SUBSYSTEM=="usb", ATTR{idVendor}=="2341", ATTR{idProduct}=="003d", MODE="0666", GROUP="dialout"' > /etc/udev/rules.d/99-arduino.rules
 
+# Grant permissions to /dev/tty* devices (required to avoid sudo for serial access)
+RUN sudo chown user:dialout /dev/tty* || true
+COPY ./deps/50-cmsis-dap.rules /etc/udev/rules.d/50-cmsis-dap.rules
+
 USER user
 RUN pipx install pyocd
 RUN pyocd pack install ATSAMV71Q21B
@@ -107,22 +111,49 @@ WORKDIR $WDIR
 USER root
 RUN chown -R user:user $WDIR
 
-# USER user
-# RUN git clone https://github.com/ReggieMarr/fprime-atmel-sam-reference.git $WDIR && \
-#     git fetch && \
-#     git checkout $GIT_BRANCH && \
-#     git reset --hard $GIT_COMMIT && \
-#     git submodule update --init --depth 1 --recommend-shallow
+USER user
+RUN git clone https://github.com/ReggieMarr/fprime-atmel-sam-reference.git $WDIR && \
+    git fetch && \
+    git checkout $GIT_BRANCH && \
+    git reset --hard $GIT_COMMIT && \
+    git submodule update --init --depth 1 --recommend-shallow
 
-# WORKDIR $WDIR/deps/FreeRTOS
-# # Bring in FreeRTOS sources and demo's
-# RUN git submodule update --init --recommend-shallow FreeRTOS/Source
-# RUN git submodule update --init --recommend-shallow FreeRTOS/Demo/ThirdParty/Community-Supported-Demos
-# RUN git submodule update --init --recommend-shallow FreeRTOS/Demo/ThirdParty/Partner-Supported-Demos
-# RUN git submodule update --init  --recommend-shallow mplab_dev_packs
+WORKDIR $WDIR/deps/FreeRTOS
+# Bring in FreeRTOS sources and demo's
+RUN git submodule update --init --recommend-shallow FreeRTOS/Source
+RUN git submodule update --init --recommend-shallow FreeRTOS/Demo/ThirdParty/Community-Supported-Demos
+RUN git submodule update --init --recommend-shallow FreeRTOS/Demo/ThirdParty/Partner-Supported-Demos
+RUN git submodule update --init  --recommend-shallow mplab_dev_packs
 
-# USER root
+WORKDIR $WDIR/deps
+RUN git submodule update --init --recommend-shallow fprime
+
+# Create virtual environment
+USER root
+ENV VIRTUAL_ENV=/home/user/venv
+RUN python3 -m venv $VIRTUAL_ENV
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+# ENV PYTHONPATH="$VIRTUAL_ENV/lib/python$(python3 -c 'import sys; print(".".join(map(str, sys.version_info[:2])))')/site-packages:$PYTHONPATH"
+
+# Set ownership
+WORKDIR $WDIR
+RUN chown -R user:user $VIRTUAL_ENV
+
+RUN chown -R user:user
+
 RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 USER user
+
+# Activate virtual environment in various shell initialization files
+RUN echo "source $VIRTUAL_ENV/bin/activate" >> ~/.bashrc && \
+    echo "source $VIRTUAL_ENV/bin/activate" >> ~/.profile
+
+# Upgrade pip in virtual environment
+RUN pip install --upgrade pip
+
+# Install Python packages (now using pip directly in virtualenv)
+RUN pip install setuptools_scm fprime-tools && \
+    pip install -r $WDIR/deps/fprime/requirements.txt
+
 WORKDIR $WDIR

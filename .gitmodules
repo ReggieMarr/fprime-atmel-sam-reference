@@ -13,3 +13,6 @@
 [submodule "deps/mplab_dev_packs"]
 	path = deps/mplab_dev_packs
 	url = https://github.com/Microchip-MPLAB-Harmony/dev_packs.git
+[submodule "deps/fprime"]
+	path = deps/fprime
+	url = https://github.com/nasa/fprime.git
