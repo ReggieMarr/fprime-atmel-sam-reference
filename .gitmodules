@@ -16,3 +16,12 @@
 [submodule "deps/fprime"]
 	path = deps/fprime
 	url = https://github.com/nasa/fprime.git
+[submodule "deps/fprime-freeRTOS"]
+	path = deps/fprime-freeRTOS
+	url = https://github.com/ReggieMarr/fprime-freeRTOS.git
+[submodule "deps/fprime-arduino"]
+	path = deps/fprime-arduino
+	url = https://github.com/fprime-community/fprime-arduino.git
+[submodule "deps/fprime-baremetal"]
+	path = deps/fprime-baremetal
+	url = https://github.com/fprime-community/fprime-baremetal.git

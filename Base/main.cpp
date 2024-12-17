@@ -47,7 +47,6 @@ void _on_reset(void) {
     setupLeds();
 }
 
-
 // LED0 blink task
 static void vLED0Task(void *pvParameters)
 {
