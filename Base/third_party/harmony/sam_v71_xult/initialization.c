@@ -206,10 +206,10 @@ SYSTEM_OBJECTS sysObj;
   Remarks:
  */
 
-#include "../sam_v71_xult/event_recorder/EventRecorder.h"
+/* #include "../sam_v71_xult/event_recorder/EventRecorder.h" */
 void SYS_Initialize ( void* data )
 {
-    EventRecorderInitialize(EventRecordAll, 1);     // We need to add this function after MCC module generation
+    /* EventRecorderInitialize(EventRecordAll, 1);     // We need to add this function after MCC module generation */
     /* MISRAC 2012 deviation block start */
     /* MISRA C-2012 Rule 2.2 deviated in this file.  Deviation record ID -  H3_MISRAC_2012_R_2_2_DR_1 */
 
@@ -228,9 +228,9 @@ void SYS_Initialize ( void* data )
     sysObj.drvI2C0 = DRV_I2C_Initialize(DRV_I2C_INDEX_0, (SYS_MODULE_INIT *)&drvI2C0InitData);
     sysObj.drvUsart0 = DRV_USART_Initialize(DRV_USART_INDEX_0, (SYS_MODULE_INIT *)&drvUsart0InitData);
 
-    APP_SENSOR_THREAD_Initialize();
-    APP_EEPROM_THREAD_Initialize();
-    APP_USER_INPUT_THREAD_Initialize();
+    /* APP_SENSOR_THREAD_Initialize(); */
+    /* APP_EEPROM_THREAD_Initialize(); */
+    /* APP_USER_INPUT_THREAD_Initialize(); */
 
     NVIC_Initialize();
 

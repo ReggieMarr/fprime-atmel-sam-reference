@@ -120,7 +120,7 @@ run_docker_compose() {
     fi
 
     # Construct and execute the command
-    docker_cmd="docker compose run $flags $service bash -c \"$command\""
+    docker_cmd="docker compose run --name ${service}-runner $flags $service bash -c \"$command\""
     exec_cmd "$docker_cmd"
 }
 
@@ -238,7 +238,7 @@ case $1 in
 
     case $EXEC_TARGET in
       "Base")
-        cmd="cmake -DENABLE_DEBUGGING=ON .. && make"
+        cmd="cmake -DENABLE_DEBUGGING=ON -DHOST_PATH=${SCRIPT_DIR} .. && make"
         [ "$CLEAN" -eq 1 ] && cmd="rm -rf ../build/* && $cmd"
 
         flags="-w $SAM_BASE_DIR/build $DEFAULT_FLAGS"

@@ -9,9 +9,10 @@ static unsigned long ulHighFrequencyTimerTicks = 0;
 #error "This rtos implementation assumes static allocation support"
 #endif
 
-#ifndef IDLE_TASK_SIZE
-#define IDLE_TASK_SIZE 1000
+#ifdef IDLE_TASK_SIZE
+#undef IDLE_TASK_SIZE
 #endif
+#define IDLE_TASK_SIZE 2000
 static StaticTask_t xIdleTaskTCBBuffer;
 static StackType_t xIdleStack[IDLE_TASK_SIZE];
 
@@ -40,19 +41,18 @@ unsigned long getTimerValue(void)
 }
 
 // TODO port over those used in arduino example
-void vApplicationMallocFailedHook(void)
-{
-    /* Called if a malloc() fails */
-    taskDISABLE_INTERRUPTS();
-    for(;;);
-}
+/* void vApplicationMallocFailedHook(void) */
+/* { */
+/*     /\* Called if a malloc() fails *\/ */
+/*     taskDISABLE_INTERRUPTS(); */
+/*     for(;;); */
+/* } */
 
-void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName)
-{
-    /* Called if a stack overflow is detected */
-    (void) xTask;
-    (void) pcTaskName;
-    taskDISABLE_INTERRUPTS();
-    for(;;);
-}
-
+/* void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName) */
+/* { */
+/*     /\* Called if a stack overflow is detected *\/ */
+/*     (void) xTask; */
+/*     (void) pcTaskName; */
+/*     taskDISABLE_INTERRUPTS(); */
+/*     for(;;); */
+/* } */

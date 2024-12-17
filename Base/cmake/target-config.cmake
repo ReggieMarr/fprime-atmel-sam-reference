@@ -14,6 +14,7 @@ set(THIRD_PARTY_ROOT "${PROJECT_ROOT}/Base/third_party/")
 option(ENABLE_DEBUGGING "Build target with debug support" OFF)
 option(ENABLE_OPTIMIZATION "Build target with optimizations turned on" OFF)
 option(STARTUP_TYPE "Type of startup up used" MICROCHIP)
+option(HOST_PATH "Host Path to map to " ${PROJECT_ROOT})
 
 # Initialize the target sources and includes
 set(TARGET_SOURCES "")

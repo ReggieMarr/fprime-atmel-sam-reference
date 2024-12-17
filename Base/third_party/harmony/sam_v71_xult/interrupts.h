@@ -65,6 +65,13 @@ void BusFault_Handler (void);
 void UsageFault_Handler (void);
 void DebugMonitor_Handler (void);
 void xPortSysTickHandler (void);
+void xPortPendSVHandler (void);
+void vPortSVCHandler (void);
+/* void SysTick_Handler (void); */
+/* void PendSV_Handler(void) __attribute__((weak, alias("xPortPendSVHandler"))); */
+/* void SysTick_Handler(void) __attribute__((weak, alias("xPortSysTickHandler"))); */
+/* void SVCall_Handler(void) __attribute__((weak, alias("vPortSVCHandler"))); */
+
 void USART1_InterruptHandler (void);
 void TWIHS0_InterruptHandler (void);
 

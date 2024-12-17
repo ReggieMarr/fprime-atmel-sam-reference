@@ -25,8 +25,10 @@ extern uint32_t _ezero;
 extern uint32_t _sstack;
 extern uint32_t _estack;
 
-/* Optional application-provided functions */
-extern void __attribute__((weak,long_call)) _on_reset(void);
+// Reset any app specific pins,
+// ensure hardware states are as desired for startup conditions
+// NOTE this is pre-access to the C library and/or other important sections
+extern void __attribute__((long_call)) _on_reset(void);
 extern void __attribute__((weak,long_call)) _on_bootstrap(void);
 
 extern void __libc_init_array(void);

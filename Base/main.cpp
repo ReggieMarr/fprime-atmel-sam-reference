@@ -1,4 +1,8 @@
 // #include "component/pio.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "sam.h"
 #include "FreeRTOS.h"
 #include "task.h"
@@ -37,17 +41,24 @@ static void setupLeds(void)
     LED1_PIO->PIO_SODR = LED1_PIN;
 }
 
+// Pre-C runtime startup reset
+void _on_reset(void) {
+    // Set the HAL's state
+    setupLeds();
+}
+
+
 // LED0 blink task
 static void vLED0Task(void *pvParameters)
 {
     (void) pvParameters;
 
     while(1) {
-        // Clear output (LED ON)
-        LED_PIO->PIO_CODR = LED0_PIN;
-        vTaskDelay(pdMS_TO_TICKS(500));
         // Set output (LED OFF)
         LED_PIO->PIO_SODR = LED0_PIN;
+        vTaskDelay(pdMS_TO_TICKS(500));
+        // Clear output (LED ON)
+        LED_PIO->PIO_CODR = LED0_PIN;
         vTaskDelay(pdMS_TO_TICKS(500));
     }
 }
@@ -58,24 +69,42 @@ static void vLED1Task(void *pvParameters)
     (void) pvParameters;
 
     while(1) {
-        // Clear output (LED ON)
-        LED1_PIO->PIO_CODR = LED1_PIN;
-        vTaskDelay(pdMS_TO_TICKS(200));
         // Set output (LED OFF)
         LED1_PIO->PIO_SODR = LED1_PIN;
         vTaskDelay(pdMS_TO_TICKS(800));
+        // Clear output (LED ON)
+        LED1_PIO->PIO_CODR = LED1_PIN;
+        vTaskDelay(pdMS_TO_TICKS(200));
     }
 }
+static StaticTask_t xLED0TaskBuffer;
+static StackType_t xLED0Stack[512];
 
 int main(void)
 {
-    SystemInit();
-    // Setup the hardware
     setupLeds();
 
     // Create the LED tasks
-    xTaskCreate(vLED0Task, "LED0", configMINIMAL_STACK_SIZE, NULL, 2, NULL);
-    xTaskCreate(vLED1Task, "LED1", configMINIMAL_STACK_SIZE, NULL, 2, NULL);
+    TaskHandle_t xLED0Handle, xLED1Handle = NULL;
+
+    // BaseType_t ret;
+    unsigned long startingNumTasks = uxTaskGetNumberOfTasks();
+    xLED0Handle = xTaskCreateStatic(vLED0Task,
+                                "LED0",
+                                512,
+                                NULL,
+                                2,
+                                xLED0Stack,
+                                &xLED0TaskBuffer);
+    configASSERT(xLED0Handle);
+
+    xTaskCreate(vLED1Task, "LED1", configMINIMAL_STACK_SIZE, NULL, 2, &xLED1Handle);
+    configASSERT(xLED1Handle != NULL);
+    if (xLED1Handle != NULL) {
+        LED1_PIO->PIO_CODR = LED1_PIN;
+    }
+
+    configASSERT( uxTaskGetNumberOfTasks() - startingNumTasks == 2 );
 
     // Start the scheduler
     vTaskStartScheduler();
@@ -83,3 +112,7 @@ int main(void)
     /* Infinite loop */
     while(1);
 }
+
+#ifdef __cplusplus
+}
+#endif

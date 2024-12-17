@@ -169,6 +169,7 @@ SECTIONS
         _estack = .;
     } > ram
 
+    PROVIDE(_stack = _estack);
     /* Provide symbols for newlib */
     end = _eheap;
 

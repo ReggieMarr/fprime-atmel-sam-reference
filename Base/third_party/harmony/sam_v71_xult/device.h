@@ -58,6 +58,10 @@
     #define DONT_USE_PREDEFINED_PERIPHERALS_HANDLERS
 #endif //DONT_USE_PREDEFINED_PERIPHERALS_HANDLERS
 #include "samv71q21b.h"
+#include "core_cm7.h"
+
+#define __builtin_software_breakpoint() __BKPT(0);
+
 #pragma GCC diagnostic pop
 #include "device_cache.h"
 #include "toolchain_specifics.h"

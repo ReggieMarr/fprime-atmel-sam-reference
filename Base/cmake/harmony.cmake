@@ -17,6 +17,12 @@ set(HARMONY_SOURCES
     ${HARMONY_DIR}/peripheral/nvic/plib_nvic.c
     ${HARMONY_DIR}/peripheral/pio/plib_pio.c
     ${HARMONY_DIR}/peripheral/efc/plib_efc.c
+    ${HARMONY_DIR}/peripheral/usart/plib_usart1.c
+    ${HARMONY_DIR}/peripheral/twihs/master/plib_twihs0_master.c
+
+    # Harmony Drivers
+    ${HARMONY_DIR}/driver/i2c/src/drv_i2c.c
+    ${HARMONY_DIR}/driver/usart/src/drv_usart.c
 )
 
 # Add include directories

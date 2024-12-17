@@ -49,12 +49,12 @@
  * The official FreeRTOS documentations suggests we use the configMINIMAL_STACK_SIZE that is provided by their demo of
  * the respective platform. This number was chosen by copying the demo of SAMV71 FreeRTOSConfig
  */
-#define configMINIMAL_STACK_SIZE ((uint16_t) 1000)
+#define configMINIMAL_STACK_SIZE ((uint16_t) 1024)
 #define configSUPPORT_DYNAMIC_ALLOCATION 1
 #define configSUPPORT_STATIC_ALLOCATION 1
 #define configTOTAL_HEAP_SIZE ((size_t) 40980)
 #define configMAX_TASK_NAME_LEN (25)
-#define configUSE_16_BIT_TICKS 0
+#define configUSE_16_BIT_TICKS 1
 #define configIDLE_SHOULD_YIELD 1
 #define configUSE_MUTEXES 1
 #define configUSE_RECURSIVE_MUTEXES 0
@@ -95,10 +95,12 @@
 
 /* Interrupt nesting behaviour configuration. */
 /* The priority at which the tick interrupt runs.  This should probably be kept at lowest priority. */
-#define configKERNEL_INTERRUPT_PRIORITY (7 << (8 - 3))
+#define configKERNEL_INTERRUPT_PRIORITY 0xFF
+/* #define configKERNEL_INTERRUPT_PRIORITY (7 << (8 - 3)) */
 /* The maximum interrupt priority from which FreeRTOS.org API functions can be called.
  * Only API functions that end in ...FromISR() can be used within interrupts. */
-#define configMAX_SYSCALL_INTERRUPT_PRIORITY (1 << (8 - 3))
+/* #define configMAX_SYSCALL_INTERRUPT_PRIORITY (1 << (8 - 3)) */
+#define configMAX_SYSCALL_INTERRUPT_PRIORITY 0x20
 
 /* Optional functions - most linkers will remove unused functions anyway. */
 #define INCLUDE_vTaskPrioritySet 1
@@ -120,15 +122,14 @@
 #define INCLUDE_uxTaskGetStackHighWaterMark2 0
 #define INCLUDE_xTaskResumeFromISR 0
 
-//#define configASSERT(x)     if( ( x ) == 0 ) { taskDISABLE_INTERRUPTS(); for( ;; ); }
 #define configASSERT(x) \
     if ((x) == 0) taskDISABLE_INTERRUPTS()
 
 /* Definitions that map the FreeRTOS port interrupt handlers to their CMSIS
 standard names. */
-#define vPortSVCHandler SVCall_Handler
-#define xPortPendSVHandler PendSV_Handler
-#define xPortSysTickHandler SysTick_Handler
+/* #define vPortSVCHandler SVCall_Handler */
+/* #define xPortPendSVHandler PendSV_Handler */
+/* #define xPortSysTickHandler SysTick_Handler */
 
 extern void configureDWTForRunTimeStats(void);
 extern unsigned long getTimerValue(void);

@@ -32,6 +32,12 @@ set(DEBUG_OPTIMIZATION_FLAGS
     # - https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html
     "-g3"
     "-Og"
+)
+
+set(RELEASE_OPTIMIZATION_FLAGS
+    # Aggressive optimization for speed and size
+    # TODO tune this better
+    "-O3"
     # Place functions and data in their own sections
     # Is leveraged for link time optimization with --gc-sections
     # NOTE: Apparently enabling this optimization can hide undefined symbols, causing the
@@ -41,12 +47,6 @@ set(DEBUG_OPTIMIZATION_FLAGS
     "-ffunction-sections"
     "-fdata-sections"
     "-Wl,--gc-sections"
-)
-
-set(RELEASE_OPTIMIZATION_FLAGS
-    # Aggressive optimization for speed and size
-    # TODO tune this better
-    "-O3"
 )
 
 # Select optimization level based on configuration
@@ -86,6 +86,8 @@ set(WARNING_FLAGS
 
 set(COMMON_COMPILE_FLAGS
     -fdiagnostics-color=always
+    # Make gdb and lsp happy
+    -fdebug-prefix-map=/fprime-atmel-sam-reference=${HOST_PATH}
     ${OPTIMIZATION_FLAGS}
     ${WARNING_FLAGS})
 
@@ -128,26 +130,6 @@ endif()
 include(${PROJECT_ROOT}/Base/cmake/startup.cmake)
 include(${PROJECT_ROOT}/Base/cmake/harmony.cmake)
 
-add_library(harmony STATIC ${HARMONY_SOURCES})
-target_include_directories(harmony
-    PRIVATE
-        ${HARMONY_INCLUDES}
-        ${ARM_PACK_INCLUDES}
-        ${MICROCHIP_PACK_INCLUDES}
-        ${FREERTOS_INCLUDES}
-)
-
-target_compile_definitions(harmony
-    PRIVATE
-        ${ARM_PACK_DEFS}
-        ${MICROCHIP_PACK_DEFS}
-)
-
-target_compile_options(harmony
-    PRIVATE
-        ${COMMON_COMPILE_FLAGS}
-)
-
 add_library(freertos STATIC ${FREERTOS_SOURCES})
 target_include_directories(freertos
     PUBLIC
@@ -159,17 +141,32 @@ target_compile_options(freertos
         ${COMMON_COMPILE_FLAGS}
 )
 
+add_library(Base STATIC ${PROJECT_ROOT}/Base/main.cpp)
+target_include_directories(Base
+    PRIVATE
+        ${MICROCHIP_PACK_INCLUDES}
+        ${ARM_PACK_INCLUDES}
+        ${HARMONY_INCLUDES}
+        ${FREERTOS_INCLUDES}
+        ${PROJECT_ROOT}/Base/startup
+)
+target_compile_options(Base
+    PRIVATE
+        ${COMMON_COMPILE_FLAGS}
+)
+
+
 # -----------------------------------------------------------------------------
 # Target configuration
 # -----------------------------------------------------------------------------
 set(PROJECT_BIN ${PROJECT_NAME}.elf)
 
-add_executable(${PROJECT_BIN} ${PROJECT_ROOT}/Base/startup/main.cpp)
+add_executable(${PROJECT_BIN} ${PROJECT_ROOT}/Base/startup/startup_samv71q21b.c)
 
 target_sources(${PROJECT_BIN}
     PRIVATE
+        ${HARMONY_SOURCES}
         ${MICROCHIP_PACK_SOURCES}
-        ${PROJECT_ROOT}/Base/startup/startup_samv71q21b.c
         ${PROJECT_ROOT}/Base/startup/freeRTOS_hooks.c
 )
 
@@ -212,7 +209,7 @@ target_link_options(${PROJECT_BIN}
 target_link_libraries(${PROJECT_BIN}
     PRIVATE
         freertos
-        harmony
+        Base
 )
 
 # -----------------------------------------------------------------------------
