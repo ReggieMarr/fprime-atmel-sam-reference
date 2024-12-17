@@ -1,0 +1,375 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python attach local",
+            "type": "python",
+            "request": "attach",
+            "connect": {
+                "host": "localhost",
+                "port": 5678
+            },
+            "cwd": "${workspaceFolder}/deploy",
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+        {
+            "name": "(gdb) Launch Docker App",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/FlightComputer/build-artifacts/Linux/FlightComputer/bin/FlightComputer",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "miDebuggerServerAddress": "localhost:5555",
+            "environment": [],
+            "externalConsole": true,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Docker Debug",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Attach debug Flight SW"
+        },
+        {
+            "name": "Attach to Device from host",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/FlightComputer/build-artifacts/Linux/FlightComputer/bin/FlightComputer",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "miDebuggerServerAddress": "localhost:5555",
+            "environment": [],
+            "useExtendedRemote": true,
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "sourceFileMap": {
+                "/fsw": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "Launch GDS Integration tests",
+            "type": "python",
+            "request": "launch",
+            "connect": {
+                "host": "localhost",
+                "port": 5678
+            },
+            "program": "${file}",
+            "console": "externalTerminal",
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}",
+                    "remoteRoot": "/home/fprime/flightcomputer-software"
+                }
+            ]
+        },
+        {
+            "name": "Launch Flight SW in docker",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/FlightComputer/build-artifacts/Linux/FlightComputer/bin/FlightComputer",
+            "args": [
+                "-a",
+                "127.1.1.1",
+                "-u",
+                "50050",
+                "-d",
+                "50000"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "/usr/bin/gdb",
+            "sourceFileMap": {
+                "/fsw/": "${workspaceFolder}"
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}",
+                    "remoteRoot": "/fsw/"
+                }
+            ],
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "pipeCwd": "${workspaceFolder}",
+            "pipeProgram": "docker",
+            "pipeArgs": [
+                "compose",
+                "run",
+                "-i",
+                "fsw",
+                "bash",
+                "-c"
+            ],
+            "debuggerPath": "/usr/bin/gdb",
+            "preLaunchTask": "Build Flight SW"
+        },
+        {
+            "name": "Launch Flight SW on host",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/FlightComputer/build-artifacts/Linux/FlightComputer/bin/FlightComputer",
+            "args": [
+                "-a",
+                "127.0.0.1",
+                "-u",
+                "50000",
+                "-d",
+                "50050"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "/usr/bin/gdb",
+            "useExtendedRemote": true,
+            "sourceFileMap": {
+                "/fsw/": "${workspaceFolder}"
+            },
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "SAMV71 OpenOCD Debug attach",
+            "type": "gdbserver",
+            "request": "attach",
+            "gdbpath": "/opt/arm-none-eabi-gcc-10.3-2021.10/bin/arm-none-eabi-gdb",
+            "executable": "${workspaceFolder}/Base/build/base_app_SAMV71Q21B.elf",
+            "args": [],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "target": "localhost:3333",
+            "externalConsole": false,
+            "setupCommands": [
+                {
+                    "description": "Reset and halt before connection",
+                    "text": "monitor reset halt",
+                    "ignoreFailures": false
+                }
+            ],
+            "customLaunchSetupCommands": []
+        },
+        {
+            "name": "SAMV71 OpenOCD Debug",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/Base/build/base_app_SAMV71Q21B.elf",
+            "args": [],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "/opt/arm-none-eabi-gcc-10.3-2021.10/bin/arm-none-eabi-gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set remote timeout",
+                    "text": "set remotetimeout 60",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Set GDB target-async",
+                    "text": "set target-async on",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Connect to target",
+                    "text": "target extended-remote localhost:3333",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Load program",
+                    "text": "load ${workspaceFolder}/Base/build/base_app_SAMV71Q21B.elf",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Reset and halt before connection",
+                    "text": "monitor reset halt",
+                    "ignoreFailures": false
+                },
+
+            ],
+            "customLaunchSetupCommands": []
+        },
+        {
+            "name": "(docker run) Pipe Launch",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "/workspace/main",
+            "cwd": "/workspace",
+            "args": [],
+            "stopAtEntry": true,
+            "environment": [],
+            "externalConsole": true,
+            "pipeTransport": {
+                "debuggerPath": "/usr/bin/gdb",
+                "pipeProgram": "docker",
+                "pipeArgs": [
+                    "run", "-i", "--rm",
+                    "-v", "${workspaceFolder}:/workspace",
+                    "${input:dockerImage}",
+                    "sh", "-c"
+                ],
+                "pipeCwd": "${workspaceFolder}"
+            },
+            "sourceFileMap": {
+                "/workspace": "${workspaceFolder}"
+            },
+            "linux": {
+                "MIMode": "gdb",
+                "setupCommands": [
+                    {
+                        "description": "Enable pretty-printing for gdb",
+                        "text": "-enable-pretty-printing",
+                        "ignoreFailures": true
+                    }
+                ]
+            }
+        },
+        {
+            "name": "SAMV71 Docker pipe",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/Base/build/base_app_SAMV71Q21B.elf",
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}",
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "pipeTransport": {
+                "debuggerPath": "/opt/arm-none-eabi/bin/arm-none-eabi-gdb",
+                "pipeProgram": "docker",
+                "pipeArgs": [
+                    "exec", "-i",
+                    "-w", "/fprime-atmel-sam-reference",
+                    "sam-runner",
+                    "sh", "-c"
+                ],
+                "pipeCwd": "${workspaceFolder}"
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}",
+                    "remoteRoot": "/fprime-atmel-sam-reference"
+                }
+            ],
+            "customLocalToRemotePath": {
+                "function": "string-replace-regexp",
+                "args": ["${workspaceFolder}", "/fprime-atmel-sam-reference"]
+            },
+            "customRemoteToLocalPath": {
+                "function": "string-replace-regexp",
+                "args": ["/fprime-atmel-sam-reference", "${workspaceFolder}"]
+            },
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set remote timeout",
+                    "text": "set remotetimeout 60",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Set GDB target-async",
+                    "text": "set target-async on",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Connect to target",
+                    "text": "target extended-remote localhost:3333",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Load program",
+                    "text": "load /fprime-atmel-sam-reference/Base/build/base_app_SAMV71Q21B.elf",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Reset and halt before connection",
+                    "text": "monitor reset halt",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Set breakpoint at main",
+                    "text": "break main",
+                    "ignoreFailures": false
+                }
+            ],
+            "customLaunchSetupCommands": []
+        },
+        {
+            "name": "SAMV71 PyOCD Debug",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/Base/build/base_app_SAMV71Q21B.elf",
+            "args": [],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "arm-none-eabi-gdb",
+            "miDebuggerServerAddress": "localhost:3333",
+            "setupCommands": [
+                {
+                    "description": "Set remote timeout",
+                    "text": "set remotetimeout 60",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Set GDB target-async",
+                    "text": "set target-async on",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Connect to target",
+                    "text": "target extended-remote localhost:3333",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Load program",
+                    "text": "load ${workspaceFolder}/Base/build/base_app_SAMV71Q21B.elf",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Reset and halt before connection",
+                    "text": "monitor reset halt",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Set breakpoint at main",
+                    "text": "break main",
+                    "ignoreFailures": false
+                }
+            ],
+            "customLaunchSetupCommands": [],
+            "launchCompleteCommand": "exec-continue"
+        }
+    ]
+}
