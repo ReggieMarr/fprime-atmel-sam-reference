@@ -1,4 +1,5 @@
-// #include "component/pio.h"
+#include <Top/setup.hpp>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -89,12 +90,12 @@ int main(void)
     // BaseType_t ret;
     unsigned long startingNumTasks = uxTaskGetNumberOfTasks();
     xLED0Handle = xTaskCreateStatic(vLED0Task,
-                                "LED0",
-                                512,
-                                NULL,
-                                2,
-                                xLED0Stack,
-                                &xLED0TaskBuffer);
+                                    "LED0",
+                                    512,
+                                    NULL,
+                                    2,
+                                    xLED0Stack,
+                                    &xLED0TaskBuffer);
     configASSERT(xLED0Handle);
 
     xTaskCreate(vLED1Task, "LED1", configMINIMAL_STACK_SIZE, NULL, 2, &xLED1Handle);

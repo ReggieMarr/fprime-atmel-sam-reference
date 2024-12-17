@@ -231,6 +231,51 @@ mplab_exec() {
 }
 
 case $1 in
+  "format")
+    if [[ "$2" == *.fpp ]]; then
+      container_file="${2/$SCRIPT_DIR/$SAM_WDIR}"
+      echo "Formatting FPP file: $container_file"
+      cmd="fpp-format $container_file"
+      # Create a temporary marker that's unlikely to appear in normal code
+      marker="@ COMMENT_PRESERVE@"
+      # Chain the commands:
+      # 1. Transform comments to temporary annotations
+      # 2. Run fpp-format
+      # 3. Transform back to comments
+      # 4. Write back to the original file
+    tmp_file="${container_file/.fpp/_tmp.fpp}"
+
+    # Create a multi-line command with error checking
+    read -r -d '' cmd <<EOF
+    set -e  # Exit on any error
+
+    # Create backup
+    cp "$container_file" "${container_file}.bak"
+
+    # Attempt formatting pipeline
+    if sed 's/^\\([ ]*\\)#/\\1${marker}#/' "$container_file" \
+       | fpp-format \
+       | sed 's/^\\([ ]*\\)${marker}#/\\1#/' > "$tmp_file"; then
+
+        # If successful, verify tmp file exists and has content
+        if [ -s "$tmp_file" ]; then
+            mv "$tmp_file" "$container_file"
+            rm "${container_file}.bak"
+            echo "Format successful"
+        else
+            echo "Error: Formatted file is empty"
+            mv "${container_file}.bak" "$container_file"
+            exit 1
+        fi
+    else
+        echo "Error during formatting"
+        mv "${container_file}.bak" "$container_file"
+        [ -f "$tmp_file" ] && rm "$tmp_file"
+        exit 1
+    fi
+EOF
+      flags="-w $SAM_WDIR $DEFAULT_FLAGS"
+      run_docker_compose $cmd --service="sam" -- $flags
 
   "build")
     EXEC_TARGET=${2:-}
