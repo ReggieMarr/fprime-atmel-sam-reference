@@ -19,7 +19,7 @@ RUN wget -q https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu-
     rm gcc-arm-none-eabi-${ARM_TOOLCHAIN_VERSION}-x86_64-linux.tar.bz2
 
 RUN apt-get install -y \
-    libtinfo6 libncurses-dev
+    clang-format libtinfo6 libncurses-dev
 
 #NOTE this is a bit sketchy but seems to allow use to use gdb
 RUN ln -s /lib/x86_64-linux-gnu/libncurses.so.6 /usr/lib/libncurses.so.5

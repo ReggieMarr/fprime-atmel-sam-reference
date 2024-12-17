@@ -4,7 +4,7 @@ export SCRIPT_DIR="$(cd "$(dirname "$0")"; pwd -P)"
 cd "$SCRIPT_DIR"
 set -e
 set -o pipefail
-set -o nounset
+# set -o nounset
 
 export SAM_IMG_BASE=${SAM_IMG_BASE:-$SAM_URL}
 export SAM_IMG_TAG=${SAM_IMG_TAG:-fsw_$(git rev-parse --abbrev-ref HEAD | sed 's/\//_/g')}
@@ -276,6 +276,15 @@ case $1 in
 EOF
       flags="-w $SAM_WDIR $DEFAULT_FLAGS"
       run_docker_compose $cmd --service="sam" -- $flags
+    else
+      fprime_root="${2:-$SCRIPT_DIR/deps/fprime}"  # Get the path provided or use current directory
+      fprime_root="${fprime_root/$SCRIPT_DIR/$SAM_WDIR}"
+      echo "Formatting from $fprime_root"
+      cmd="git diff --name-only --relative | fprime-util format --no-backup --stdin"
+      flags="-w $fprime_root $DEFAULT_FLAGS"
+      run_docker_compose $cmd --service="sam" -- $flags
+    fi
+    ;;
 
   "build")
     EXEC_TARGET=${2:-}
