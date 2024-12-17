@@ -123,13 +123,15 @@ WORKDIR $WDIR/deps/FreeRTOS
 RUN git submodule update --init --recommend-shallow FreeRTOS/Source
 RUN git submodule update --init --recommend-shallow FreeRTOS/Demo/ThirdParty/Community-Supported-Demos
 RUN git submodule update --init --recommend-shallow FreeRTOS/Demo/ThirdParty/Partner-Supported-Demos
-RUN git submodule update --init  --recommend-shallow mplab_dev_packs
 
 WORKDIR $WDIR/deps
+RUN git submodule update --init  --recommend-shallow mplab_dev_packs
 RUN git submodule update --init --recommend-shallow fprime
 
 # Create virtual environment
 USER root
+RUN chown -R user:user $WDIR/deps
+
 ENV VIRTUAL_ENV=/home/user/venv
 RUN python3 -m venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
@@ -138,8 +140,6 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 # Set ownership
 WORKDIR $WDIR
 RUN chown -R user:user $VIRTUAL_ENV
-
-RUN chown -R user:user
 
 RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
