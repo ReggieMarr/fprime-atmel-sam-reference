@@ -108,24 +108,25 @@ ARG GIT_BRANCH
 ARG GIT_COMMIT
 
 WORKDIR $WDIR
-USER root
-RUN chown -R user:user $WDIR
+# USER root
+# RUN chown -R user:user $WDIR
 
 USER user
 RUN git clone https://github.com/ReggieMarr/fprime-atmel-sam-reference.git $WDIR && \
     git fetch && \
     git checkout $GIT_BRANCH && \
-    git reset --hard $GIT_COMMIT && \
-    git submodule update --init --depth 1 --recommend-shallow
+    git reset --hard $GIT_COMMIT
+    # && \
+    # git submodule update --init --depth 1 --recommend-shallow
 
-WORKDIR $WDIR/deps/FreeRTOS
-# Bring in FreeRTOS sources and demo's
-RUN git submodule update --init --recommend-shallow FreeRTOS/Source
-RUN git submodule update --init --recommend-shallow FreeRTOS/Demo/ThirdParty/Community-Supported-Demos
-RUN git submodule update --init --recommend-shallow FreeRTOS/Demo/ThirdParty/Partner-Supported-Demos
+# WORKDIR $WDIR/deps/FreeRTOS
+# # Bring in FreeRTOS sources and demo's
+# RUN git submodule update --init --recommend-shallow FreeRTOS/Source
+# RUN git submodule update --init --recommend-shallow FreeRTOS/Demo/ThirdParty/Community-Supported-Demos
+# RUN git submodule update --init --recommend-shallow FreeRTOS/Demo/ThirdParty/Partner-Supported-Demos
 
 WORKDIR $WDIR/deps
-RUN git submodule update --init  --recommend-shallow mplab_dev_packs
+# RUN git submodule update --init  --recommend-shallow mplab_dev_packs
 RUN git submodule update --init --recommend-shallow fprime
 
 # Create virtual environment
@@ -160,13 +161,26 @@ FROM project-setup AS cmsis-setup
 
 ENV HOME=/home/user/
 ARG CMSIS_VERSION="2.7.0"
+ARG ARM_GCC_VERSION="12.3.1"
 RUN wget https://artifacts.tools.arm.com/cmsis-toolbox/${CMSIS_VERSION}/cmsis-toolbox-linux-amd64.tar.gz
 
 RUN tar -xf cmsis-toolbox-linux-amd64.tar.gz -C $HOME
+RUN chown -R user:user $WDIR/deps
+
+RUN wget https://artifacts.tools.arm.com/arm-none-eabi-gcc/${ARM_GCC_VERSION}/arm-gnu-toolchain-x86_64-arm-none-eabi.tar.bz2
+RUN tar -xf arm-gnu-toolchain-x86_64-arm-none-eabi.tar.bz2 -C $HOME
+RUN chown -R user:user ${HOME}/arm-gnu-toolchain-12.3.rel1-x86_64-arm-none-eabi/
+ENV GCC_TOOLCHAIN_12_3_1="${HOME}/arm-gnu-toolchain-12.3.rel1-x86_64-arm-none-eabi/bin"
 
 ENV PATH="$HOME/cmsis-toolbox-linux-amd64/bin:$PATH"
-ENV CMSIS_PACK_ROOT="$WDIR/deps/packs"
+ENV CMSIS_PACK_ROOT="$WDIR/fprime-atmel/cmake/toolchain/support/sources/samv71q21b/cmsis/samv71_blink/packs"
+# ENV CMSIS_PACK_ROOT="$WDIR/deps/packs"
 ENV CMSIS_COMPILER_ROOT="$HOME/cmsis-toolbox-linux-amd64/etc"
 RUN cpackget init https://www.keil.com/pack/index.pidx
+
+RUN mkdir $HOME/ninja
+RUN wget -qO $HOME/ninja/ninja.gz https://github.com/ninja-build/ninja/releases/latest/download/ninja-linux.zip -nv
+RUN gunzip $HOME/ninja/ninja.gz
+RUN chmod a+x $HOME/ninja/ninja
 
 WORKDIR $WDIR

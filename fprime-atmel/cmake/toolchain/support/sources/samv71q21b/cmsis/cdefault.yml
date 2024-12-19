@@ -1,16 +1,22 @@
 default:
   misc:
-    GCC:
+    - for-compiler: GCC
+      C-CPP:
+        - -D__SAMV71Q21B__
+        - -DARM_MATH_CM7
+        - -mcpu=cortex-m7
+        - -mthumb
+        - -mfpu=fpv5-d16
+        - -mfloat-abi=hard
+        - -O0                                   # Optimization level
+        - -g                                    # Debug information
+        - -Wall                                 # Enable all warnings
       C:
-        - '-mcpu=cortex-m7'
-        - '-mthumb'
-        - '-mfpu=fpv5-d16'
-        - '-mfloat-abi=hard'
-        - '-O0'                                   # Optimization level
-        - '-g'                                    # Debug information
-        - '-Wall'                                 # Enable all warnings
-      AS:
-        - '-mcpu=cortex-m7'
-        - '-mthumb'
-        - '-mfpu=fpv5-d16'
-        - '-mfloat-abi=hard'
+        - -std=gnu11
+      ASM:
+        - -D__SAMV71Q21B__
+        - -DARM_MATH_CM7
+        - -mcpu=cortex-m7
+        - -mthumb
+        - -mfpu=fpv5-d16
+        - -mfloat-abi=hard

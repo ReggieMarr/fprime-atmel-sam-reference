@@ -1,27 +1,15 @@
 project:
-  name: 'samv71_blinky_project'
-  description: 'Blinking LED application for SAMV71 Xplained board.'
-  device:
-    vendor: 'Microchip'
-    name: 'ATSAMV71Q21B'                           # Specify the device
-  compiler: 'GCC'
+  description: Blinking LED application for SAMV71 Xplained board.
+  compiler: GCC
   define:
-    - '__SAMV71Q21B__'
-    - 'ARM_MATH_CM7'
-    - '__FPU_PRESENT=1'
-    - '__FPU_USED=1'
-    - '__DEBUG'                                    # Include if debugging is enabled
-  optimize: 'none'                                  # No optimization for initial build
-  debug: 'on'                                       # Generate debug information
-  linker:
-    scatter-file: 'linker_script.ld'               # Specify your linker script if needed
+    - __DEBUG                                    # Include if debugging is enabled
   groups:
-    - group: 'Source Files'
+    - group: Source Files
       files:
-        - file: 'main.c'                           # Your main application file
+        - file: src/main.c
   components:
-    - component: 'Device:Startup'                  # Startup code component
-    - component: 'CMSIS:CORE'                      # CMSIS Core component
+    - component: Device:Startup                  # Startup code component
+    - component: CMSIS:CORE                      # CMSIS Core component
   packs:
-    - pack: 'ARM::CMSIS@5.8.0'
-    - pack: 'Microchip::SAMV71_DFP@4.10.230'
+    - pack: ARM::CMSIS@5.8.0
+    - pack: Microchip::SAMV71_DFP@4.10.230

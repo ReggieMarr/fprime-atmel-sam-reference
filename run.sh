@@ -354,6 +354,14 @@ EOF
       "keil-cfg")
         keil_exec "uv"
       ;;
+      "cmsis-cfg")
+        cmsis_path="fprime-atmel/cmake/toolchain/support/sources/samv71q21b/cmsis"
+        flags="-w $SAM_WDIR/$cmsis_path $DEFAULT_FLAGS"
+        # NOTE we often get stuck on trivial schema errors.
+        # prevent this with -n
+        cmd="csolution -v -d convert blinky.csolution.yml"
+        run_docker_compose $cmd --service="sam" -- $flags
+      ;;
       "mplab-cfg")
         mplab_exec "mplab_ide"
       ;;
@@ -390,10 +398,6 @@ EOF
           exit 1
           ;;
         esac
-        ;;
-    "get-cmsis-toolbox")
-        url="https://artifacts-download.tools.arm.com/artifactory/filestore/1d/1dc258d903ff117ebfa8a368bf0eaf1f91440b44?response-content-type=application/x-gzip&response-content-disposition=attachment%3Bfilename%3D%22cmsis-toolbox-linux-amd64.tar.gz%22&x-jf-traceId=62be464e6edac7c2&X-Artifactory-repositoryKey=cmsis-toolbox-local&X-Artifactory-projectKey=default&X-Artifactory-artifactPath=2.7.0%2Fcmsis-toolbox-linux-amd64.tar.gz&X-Artifactory-username=anonymous&Expires=1734559694&Signature=Z7QVc9Kgrxza~aMK20bE1TlzLM8wSSAHIX8ODjHKIjMDT4c~RDcf9benjJycBVQjA-Y5zV1MQKrKY-RLTza5ezIrr499GMx1svzwvbKrSbjR4U4p7Q7TArNYBY22is7Xdt3EltO-ONUvxXrAcEzBbRUmyTy2JsNx70R3xHomSmWc0i-VjkQbcb4OQABRtRs8~ZSqROq1UXeWXcbprlwXuHWHKnBQGYxeDyCoytAnFqhdbmRA7kT5dmA4Ao9kpOAClbZAGKSrjA18m2EejCqM9Ml2QwcBhVD3ZlV8LDsoUFafxwbXzCp-wn7tMYFnqlLgr~o~6JKV9l4PTaLnWqCjGQ__&Key-Pair-Id=K322DCOYLXMUUQ"
-        exec_cmd "wget $url"
         ;;
     "teardown")
         echo "Tearing down services..."

@@ -1,31 +1,35 @@
-/* #include "sam.h" */
-
-/* void delay(volatile uint32_t count) { */
-/*     while (count--); */
-/* } */
-
-/* int main(void) { */
-/*     // Initialize the SAMV71 system */
-/*     SystemInit(); */
-
-/*     // Enable the clock for Port A */
-/*     PMC->PMC_PCER0 |= (1 << ID_PIOA); */
-
-/*     // Configure PA10 (LED) as output */
-/*     PIOA->PIO_PER = PIO_PA10; */
-/*     PIOA->PIO_OER = PIO_PA10; */
-
-/*     while (1) { */
-/*         // Toggle the LED */
-/*         PIOA->PIO_SODR = PIO_PA10;  // Set PA10 high */
-/*         delay(1000000); */
-/*         PIOA->PIO_CODR = PIO_PA10;  // Set PA10 low */
-/*         delay(1000000); */
-/*     } */
-
-/*     return 0; */
-/* } */
 #include "sam.h"
+
+#define LED0_PIN    PIO_PA23
+#define LED_PIO     PIOA_REGS
+#define LED1_PIN    PIO_PC9
+#define LED1_PIO    PIOC_REGS
+
+static void setupLeds(void)
+{
+    // Enable clocks for GPIO
+    PMC_REGS->PMC_PCER0 = (1 << ID_PIOA) | (1 << ID_PIOC);
+
+    // Configure LED0
+    // Enable PIO control (as opposed to peripheral control)
+    LED_PIO->PIO_PER = LED0_PIN;
+    // Configure as output
+    LED_PIO->PIO_OER = LED0_PIN;
+    // Disable internal pull-up
+    LED_PIO->PIO_PUDR = LED0_PIN;
+    // Set high (LED off)
+    LED_PIO->PIO_SODR = LED0_PIN;
+
+    // Configure LED1
+    // Enable PIO control
+    LED1_PIO->PIO_PER = LED1_PIN;
+    // Configure as output
+    LED1_PIO->PIO_OER = LED1_PIN;
+    // Disable pull-up
+    LED1_PIO->PIO_PUDR = LED1_PIN;
+    // Set high (LED off)
+    LED1_PIO->PIO_SODR = LED1_PIN;
+}
 
 void delay_ms(uint32_t ms) {
     for (uint32_t i = 0; i < (ms * 1000); ++i) {
@@ -34,18 +38,14 @@ void delay_ms(uint32_t ms) {
 }
 
 int main(void) {
-    // Enable clock for Port A (PIOA)
-    PMC->PMC_PCER0 = (1 << ID_PIOA);
+    setupLeds();
 
-    // Configure PA0 as output
-    PIOA->PIO_PER = PIO_PA0;
-    PIOA->PIO_OER = PIO_PA0;
-
-    while (1) {
-        // Toggle PA0
-        PIOA->PIO_SODR = PIO_PA0; // Set
+    while(1) {
+        // Set output (LED OFF)
+        LED1_PIO->PIO_SODR = LED1_PIN;
         delay_ms(500);
-        PIOA->PIO_CODR = PIO_PA0; // Clear
+        // Clear output (LED ON)
+        LED1_PIO->PIO_CODR = LED1_PIN;
         delay_ms(500);
     }
 
