@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component_viewer schemaVersion="0.1" xmlns:xs="http://www.w3.org/2001/XMLSchema-instance" xs:noNamespaceSchemaLocation="Component_Viewer.xsd">
+    <component name="FreeRTOS" version="1.0.0"/>    <!-- name and version of the component  -->
+    <events>
+        <group name="FreeRTOS Trace">
+            <component name="Event Recorder" brief="MPLABX event recorder events" no="0xFF" prefix="Evt_" info="MPLABX event recorder events"/>
+            <component name="Detail" brief="FreeRTOS detailed information" no="0xA0" prefix="Evt_" info="FreeRTOS detailed information"/>
+            <component name="System" brief="FreeRTOS system component" no="0xA1" prefix="Evt_" info="FreeROTS system related"/>
+            <component name="Task" brief="FreeRTOS task component" no="0xA2" prefix="Evt_" info="FreeROTS task related"/>
+            <component name="Queue" brief="FreeRTOS queue component" no="0xA3" prefix="Evt_" info="FreeROTS queue related"/>
+            <component name="Memory" brief="FreeRTOS memory component" no="0xA4" prefix="Evt_" info="FreeROTS memory related"/>
+            <component name="Timer" brief="FreeRTOS timer component" no="0xA5" prefix="Evt_" info="FreeROTS timer related"/>
+            <component name="Event Group" brief="FreeRTOS event group component" no="0xA6" prefix="Evt_" info="FreeROTS event group related"/>
+            <component name="Stream Buffer" brief="FreeRTOS stream buffer component" no="0xA7" prefix="Evt_" info="FreeROTS stream buffer related"/>
+            <component name="State" brief="FreeRTOS state component" no="0xA8" prefix="Evt_" info="FreeROTS state related"/>
+        </group>
+        <event id="0xFF00" level="Op" property="Event recorder initialize" value="Init count: %x[val1]" info="MPLABX event recorder initialize"/>
+        <event id="0xFF01" level="Op" property="Event recorder start" value="" info="MPLABX event recorder initialize"/>
+        
+        <event id="0xA101" level="Op" property="Ticks jump" value="Ticks to jump: %x[val1]" info="FreeRTOS system ticks to jump"/>
+        <event id="0xA102" level="Op" property="Ticks count" value="Ticks count increase: %x[val1]" info="FreeRTOS system ticks count increase"/>
+        <event id="0xA103" level="Op" property="Low power idle begin" value="Idle begin" info="FreeRTOS low power idle begin"/>
+        <event id="0xA104" level="Op" property="Low power idle end" value="Idle end" info="FreeRTOS low power idle end"/>
+        
+        <event id="0xA802" level="Op" property="Task ready" value="Task number: %x[val1]" info="FreeRTOS task move to ready state"/>
+        <event id="0xA201" level="Op" property="Task switched in" value="Task number: %x[val1]" info="FreeRTOS task switched in"/>
+        <event id="0xA202" level="Op" property="Task switched out" value="Task number: %x[val1]" info="FreeRTOS task switched out"/>
+        <event id="0xA203" level="Op" property="Task create" value="Task number: %x[val1], task name: %t[val2]%t[val3]%t[val4]" info="FreeRTOS task create"/>
+        <event id="0xA204" level="Op" property="Task create failed" value="" info="FreeRTOS task create failed"/>
+        <event id="0xA205" level="Op" property="Task suspend" value="Task number: %x[val1]" info="FreeRTOS task suspend"/>
+        <event id="0xA206" level="Op" property="Task delay" value="Task number: %x[val1]" info="FreeRTOS task delay"/>
+        <event id="0xA207" level="Op" property="Task delay until" value="Task number: %x[val1], until: %x[val2]" info="FreeRTOS task delay until"/>
+        <event id="0xA208" level="Op" property="Task priority set" value="Task number: %x[val1], priority: %x[val2]" info="FreeRTOS task priority set"/>
+        <event id="0xA209" level="Op" property="Task priority inherit" value="Task number: %x[val1], priority: %x[val2]" info="FreeRTOS task priority inherit"/>
+        <event id="0xA20A" level="Op" property="Task resume" value="Task number: %x[val1]" info="FreeRTOS task resume"/>
+        <event id="0xA20B" level="Op" property="Task resume from ISR" value="Task number: %x[val1]" info="FreeRTOS task resume from ISR"/>
+        <event id="0xA20C" level="Op" property="Task notify" value="Task number: %x[val1], index to notify: %x[val2]" info="FreeRTOS task notify"/>
+        <event id="0xA20D" level="Op" property="Task notify from ISR" value="Task number: %x[val1], index to notify: %x[val2]" info="FreeRTOS task notify from ISR"/>
+        <event id="0xA20E" level="Op" property="Task notify give from ISR" value="Task number: %x[val1], index to notify: %x[val2]" info="FreeRTOS task notify give from ISR"/>
+        <event id="0xA20F" level="Op" property="Task notify take" value="Task number: %x[val1], index to notify: %x[val2]" info="FreeRTOS task notify take"/>
+        <event id="0xA210" level="Op" property="Task notify take block" value="Task number: %x[val1], index to notify: %x[val2]" info="FreeRTOS task notify take block"/>
+        <event id="0xA211" level="Op" property="Task notify wait" value="Task number: %x[val1], index to notify: %x[val2]" info="FreeRTOS task notify wait"/>
+        <event id="0xA212" level="Op" property="Task notify wait block" value="Task number: %x[val1], index to notify: %x[val2]" info="FreeRTOS task notify wait block"/>
+        
+        <event id="0xA301" level="Op" property="Queue create" value="Queue number: %x[val1], queue type: %x[val2]" info="FreeRTOS queue create"/>
+        <event id="0xA302" level="Op" property="Queue create failed" value="Queue type: %x[val1]" info="FreeRTOS queue create failed"/>
+        <event id="0xA303" level="Op" property="Queue delete" value="Queue number: %x[val1], queue type: %x[val2]" info="FreeRTOS queue delete"/>
+        <event id="0xA304" level="Op" property="Queue send" value="Queue number: %x[val1], queue type: %x[val2]" info="FreeRTOS queue send"/>
+        <event id="0xA305" level="Op" property="Queue send failed" value="Queue number: %x[val1], queue type: %x[val2]" info="FreeRTOS queue send failed"/>
+        <event id="0xA306" level="Op" property="Blocking on queue send" value="Queue number: %x[val1], queue type: %x[val2]" info="FreeRTOS blocking on queue send"/>
+        <event id="0xA307" level="Op" property="Queue send from ISR" value="Queue number: %x[val1], queue type: %x[val2]" info="FreeRTOS queue send from ISR"/>
+        <event id="0xA308" level="Op" property="Queue send from ISR failed" value="Queue number: %x[val1], queue type: %x[val2]" info="FreeRTOS queue send from ISR failed"/>
+        <event id="0xA309" level="Op" property="Queue receive" value="Queue number: %x[val1], queue type: %x[val2]" info="FreeRTOS queue receive"/>
+        <event id="0xA30A" level="Op" property="Queue receive failed" value="Queue number: %x[val1], queue type: %x[val2]" info="FreeRTOS queue receive failed"/>
+        <event id="0xA30B" level="Op" property="Blocking on queue receive" value="Queue number: %x[val1], queue type: %x[val2]" info="FreeRTOS blocking on queue receive"/>
+        <event id="0xA30C" level="Op" property="Queue peek" value="Queue number: %x[val1], queue type: %x[val2]" info="FreeRTOS queue peek"/>
+        <event id="0xA30D" level="Op" property="Queue peek failed" value="Queue number: %x[val1], queue type: %x[val2]" info="FreeRTOS queue peek failed"/>
+        <event id="0xA30E" level="Op" property="Blocking on queue peek" value="Queue number: %x[val1], queue type: %x[val2]" info="FreeRTOS blocking on queue peek"/>
+        <event id="0xA30F" level="Op" property="Queue receive from ISR" value="Queue number: %x[val1], queue type: %x[val2]" info="FreeRTOS queue receive from ISR"/>
+        <event id="0xA310" level="Op" property="Queue receive from ISR failed" value="Queue number: %x[val1], queue type: %x[val2]" info="FreeRTOS queue receive from ISR failed"/>
+        <event id="0xA311" level="Op" property="Counting semaphore create" value="Created" info="FreeRTOS counting semaphore create"/>
+        <event id="0xA312" level="Op" property="Counting semaphore create failed" value="" info="FreeRTOS counting semaphore create failed"/>
+        <event id="0xA313" level="Op" property="Mutex create" value="Mutex number: %x[val1], queue type: %x[val2]" info="FreeRTOS mutex create"/>
+        <event id="0xA314" level="Op" property="Mutex create failed" value="" info="FreeRTOS mutex create failed"/>
+        <event id="0xA315" level="Op" property="Queue registry add" value="Queue number: %x[val1], queue name: %t[val2]%t[val3]%t[val4]" info="FreeRTOS queue registry add"/>
+        
+        <event id="0xA401" level="Op" property="Memory allocation" value="Address: %x[val1], size: %x[val2]" info="FreeRTOS memory allocation"/>
+        <event id="0xA402" level="Op" property="Memory free" value="Address: %x[val1], size: %x[val2]" info="FreeRTOS memory free"/>
+
+        <event id="0xA501" level="Op" property="Timer create" value="Timer number: %x[val1], timer name: %t[val2]%t[val3]%t[val4]" info="FreeRTOS timer create"/>
+        <event id="0xA502" level="Op" property="Timer create failed" value="" info="FreeRTOS timer create failed"/>
+        <event id="0xA503" level="Op" property="Timer command send" value="Timer number: %x[val1], command ID: %x[val2], optional value: %x[val3], return value: %x[val4]" info="FreeRTOS timer command send"/>
+        <event id="0xA504" level="Op" property="Timer expired" value="Timer number: %x[val1]" info="FreeRTOS timer expired"/>
+        <event id="0xA505" level="Op" property="Timer pend function call" value="Function address: %x[val1], parameter1 address: %x[val2], parameter2 value: %x[val2], return value: %x[val4]" info="FreeRTOS timer pend function call"/>
+        <event id="0xA506" level="Op" property="Timer pend function call from ISR" value="Function address: %x[val1], parameter1 address: %x[val2], parameter2 value: %x[val2], return value: %x[val4]" info="FreeRTOS timer pend function call from ISR"/>
+
+        <event id="0xA601" level="Op" property="Event group create" value="Event group number: %x[val1]" info="FreeRTOS event group create"/>
+        <event id="0xA602" level="Op" property="Event group delete" value="Event group number: %x[val1]" info="FreeRTOS event group delete"/>
+        <event id="0xA603" level="Op" property="Event group create failed" value="" info="FreeRTOS event group create failed"/>
+        <event id="0xA604" level="Op" property="Event group sync block" value="Event group number: %x[val1], bits to set: %x[val2], bits to wait for: %x[val3]" info="FreeRTOS event group sync block"/>
+        <event id="0xA605" level="Op" property="Event group sync end" value="Event group number: %x[val1], bits to set: %x[val2], bits to wait for: %x[val3], timeout occurred: %x[val4]" info="FreeRTOS event group sync end"/>
+        <event id="0xA606" level="Op" property="Event group wait bits block" value="Event group number: %x[val1], bits to wait for: %x[val2]" info="FreeRTOS event group wait bits block"/>
+        <event id="0xA607" level="Op" property="Event group wait bits end" value="Event group number: %x[val1], bits to wait for: %x[val2], timeout occurred: %x[val3]" info="FreeRTOS event group wait bits end"/>
+        <event id="0xA608" level="Op" property="Event group clear bits" value="Event group number: %x[val1], bits to clear: %x[val2]" info="FreeRTOS event group clear bits"/>
+        <event id="0xA609" level="Op" property="Event group clear bits from ISR" value="Event group number: %x[val1], bits to clear: %x[val2]" info="FreeRTOS event group clear bits from ISR"/>
+        <event id="0xA60A" level="Op" property="Event group set bits" value="Event group number: %x[val1], bits to set %x[val2]" info="FreeRTOS event group set bits"/>
+        <event id="0xA60B" level="Op" property="Event group set bits from ISR" value="Event group number: %x[val1], bits to set %x[val2]" info="FreeRTOS event group set bits from ISR"/>
+
+        <event id="0xA701" level="Op" property="Stream buffer create" value="Stream buffer number: %x[val1], is message buffer: %x[val2]" info="FreeRTOS stream buffer create"/>
+        <event id="0xA702" level="Op" property="Stream buffer create failed" value="Is message buffer: %x[val1]" info="FreeRTOS stream buffer create failed"/>
+        <event id="0xA703" level="Op" property="Stream buffer create static failed" value="Handler address: %x[val1], is message buffer: %x[val2]" info="FreeRTOS stream buffer create static failed"/>
+        <event id="0xA704" level="Op" property="Stream buffer delete" value="Stream buffer number: %x[val1]" info="FreeRTOS stream buffer delete"/>
+        <event id="0xA705" level="Op" property="Stream buffer reset" value="Stream buffer number: %x[val1]" info="FreeRTOS stream buffer reset"/>
+        <event id="0xA706" level="Op" property="Stream buffer send" value="Stream buffer number: %x[val1], bytes sent: %x[val2]" info="FreeRTOS stream buffer send"/>
+        <event id="0xA707" level="Op" property="Blocking on stream buffer send" value="Stream buffer number: %x[val1]" info="FreeRTOS blocking on stream buffer send"/>
+        <event id="0xA708" level="Op" property="Stream buffer send failed" value="Stream buffer number: %x[val1]" info="FreeRTOS stream buffer send failed"/>
+        <event id="0xA709" level="Op" property="Stream buffer receive" value="Stream buffer number: %x[val1], bytes received: %x[val2]" info="FreeRTOS stream buffer receive"/>
+        <event id="0xA70A" level="Op" property="Blocking on stream buffer receive" value="Stream buffer number: %x[val1]" info="FreeRTOS blocking on stream buffer receive"/>
+        <event id="0xA70B" level="Op" property="Stream buffer receive failed" value="Stream buffer number: %x[val1]" info="FreeRTOS stream buffer receive"/>
+        <event id="0xA70C" level="Op" property="Stream buffer send from ISR" value="Stream buffer number: %x[val1], bytes sent: %x[val2]" info="FreeRTOS stream buffer send from ISR"/>
+        <event id="0xA70D" level="Op" property="Stream buffer receive from ISR" value="Stream buffer number: %x[val1], bytes received: %x[val2]" info="FreeRTOS stream buffer receive from ISR"/>
+    </events>
+    <plots>
+        <task name="RTOS Tasks">
+            <create id="0xA203" tid_format="%x[val1]" tname_format="%t[val2]%t[val3]%t[val4]"/>
+            <switch_in id="0xA201" tid_format="%x[val1]"/>
+            <switch_out id="0xA202" tid_format="%x[val1]"/>
+        </task>
+        <line name="RTOS Memory">
+            <update id="0xA401" variable="memory" expr="%d[val0+val2]"/>
+            <update id="0xA402" variable="memory" expr="%d[val0-val2]"/>
+        </line>
+        <cpu name="RTOS CPU" ref="RTOS Tasks"/>
+        <table name="RTOS Events" ref="FreeRTOS Trace"/>
+    </plots>
+</component_viewer>

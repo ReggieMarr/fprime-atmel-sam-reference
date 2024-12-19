@@ -156,4 +156,17 @@ RUN pip install --upgrade pip
 RUN pip install setuptools_scm fprime-tools && \
     pip install -r $WDIR/deps/fprime/requirements.txt
 
+FROM project-setup AS cmsis-setup
+
+ENV HOME=/home/user/
+ARG CMSIS_VERSION="2.7.0"
+RUN wget https://artifacts.tools.arm.com/cmsis-toolbox/${CMSIS_VERSION}/cmsis-toolbox-linux-amd64.tar.gz
+
+RUN tar -xf cmsis-toolbox-linux-amd64.tar.gz -C $HOME
+
+ENV PATH="$HOME/cmsis-toolbox-linux-amd64/bin:$PATH"
+ENV CMSIS_PACK_ROOT="$WDIR/deps/packs"
+ENV CMSIS_COMPILER_ROOT="$HOME/cmsis-toolbox-linux-amd64/etc"
+RUN cpackget init https://www.keil.com/pack/index.pidx
+
 WORKDIR $WDIR

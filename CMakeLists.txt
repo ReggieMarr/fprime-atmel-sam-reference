@@ -4,7 +4,9 @@
 cmake_minimum_required(VERSION 3.26)
 project(AtmelSam C CXX)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-# set(CMAKE_DEBUG_OUTPUT ON)
+get_filename_component(PROJECT_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../" ABSOLUTE)
+set(DEPS_ROOT "${PROJECT_ROOT}/deps")
+
 ###
 # F' Core Setup
 # This includes all of the F prime core components, and imports the make-system.

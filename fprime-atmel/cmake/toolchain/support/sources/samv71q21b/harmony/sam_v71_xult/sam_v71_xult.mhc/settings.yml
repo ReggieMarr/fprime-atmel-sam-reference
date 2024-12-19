@@ -1,0 +1,14 @@
+format_version: v1.0
+configName: sam_v71_xult
+folderName: drivers_freertos_sam_e71_xult
+frameworkPath: C:\MTT_SAM\SamV71\FreeRtos
+processor: ATSAMV71Q21B
+projectName: drivers_freertos_sam_e71_xult
+settings:
+  PackageFilter: ''
+  FORCE_OPTIMIZATION: 'false'
+  GENERATE_BACKUP: 'true'
+  TRUSTZONE: 'false'
+  CMSISPath: dev_packs\arm\CMSIS\5.8.0
+  MERGE_STRATEGY: USER_ALL
+  DFPPath: dev_packs\Microchip\SAMV71_DFP\4.9.117\samv71b\atdf\ATSAMV71Q21B.atdf
