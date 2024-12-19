@@ -108,24 +108,25 @@ ARG GIT_BRANCH
 ARG GIT_COMMIT
 
 WORKDIR $WDIR
-USER root
-RUN chown -R user:user $WDIR
+# USER root
+# RUN chown -R user:user $WDIR
 
 USER user
 RUN git clone https://github.com/ReggieMarr/fprime-atmel-sam-reference.git $WDIR && \
     git fetch && \
     git checkout $GIT_BRANCH && \
-    git reset --hard $GIT_COMMIT && \
-    git submodule update --init --depth 1 --recommend-shallow
+    git reset --hard $GIT_COMMIT
+    # && \
+    # git submodule update --init --depth 1 --recommend-shallow
 
-WORKDIR $WDIR/deps/FreeRTOS
-# Bring in FreeRTOS sources and demo's
-RUN git submodule update --init --recommend-shallow FreeRTOS/Source
-RUN git submodule update --init --recommend-shallow FreeRTOS/Demo/ThirdParty/Community-Supported-Demos
-RUN git submodule update --init --recommend-shallow FreeRTOS/Demo/ThirdParty/Partner-Supported-Demos
+# WORKDIR $WDIR/deps/FreeRTOS
+# # Bring in FreeRTOS sources and demo's
+# RUN git submodule update --init --recommend-shallow FreeRTOS/Source
+# RUN git submodule update --init --recommend-shallow FreeRTOS/Demo/ThirdParty/Community-Supported-Demos
+# RUN git submodule update --init --recommend-shallow FreeRTOS/Demo/ThirdParty/Partner-Supported-Demos
 
 WORKDIR $WDIR/deps
-RUN git submodule update --init  --recommend-shallow mplab_dev_packs
+# RUN git submodule update --init  --recommend-shallow mplab_dev_packs
 RUN git submodule update --init --recommend-shallow fprime
 
 # Create virtual environment

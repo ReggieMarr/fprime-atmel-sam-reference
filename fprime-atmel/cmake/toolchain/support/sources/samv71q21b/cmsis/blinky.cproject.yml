@@ -1,6 +1,7 @@
 project:
   description: Blinking LED application for SAMV71 Xplained board.
-  device: ATSAMV71Q21B
+  # NOTE this identifier is deprecated now
+  # device: ATSAMV71Q21B
   compiler: GCC
   define:
     - __SAMV71Q21B__
