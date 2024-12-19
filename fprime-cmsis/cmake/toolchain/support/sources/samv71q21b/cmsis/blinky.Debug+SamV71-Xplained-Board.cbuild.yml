@@ -1,0 +1,47 @@
+build:
+  generated-by: csolution version 2.7.0
+  solution: blinky.csolution.yml
+  project: blinky.cproject.yml
+  context: blinky.Debug+SamV71-Xplained-Board
+  compiler: GCC
+  device: Microchip::ATSAMV71Q21B
+  optimize: debug
+  debug: on
+  misc:
+    ASM:
+      - -D__SAMV71Q21B__
+      - -DARM_MATH_CM7
+      - -mcpu=cortex-m7
+      - -mthumb
+      - -mfpu=fpv5-d16
+      - -mfloat-abi=hard
+    C:
+      - -std=gnu11
+      - -D__SAMV71Q21B__
+      - -DARM_MATH_CM7
+      - -mcpu=cortex-m7
+      - -mthumb
+      - -mfpu=fpv5-d16
+      - -mfloat-abi=hard
+      - -O0
+      - -g
+      - -Wall
+    CPP:
+      - -D__SAMV71Q21B__
+      - -DARM_MATH_CM7
+      - -mcpu=cortex-m7
+      - -mthumb
+      - -mfpu=fpv5-d16
+      - -mfloat-abi=hard
+      - -O0
+      - -g
+      - -Wall
+  define:
+    - __DEBUG
+  output-dirs:
+    intdir: tmp
+    outdir: out/blinky/SamV71-Xplained-Board/Debug
+    rtedir: RTE
+  output:
+    - type: elf
+      file: blinky.elf

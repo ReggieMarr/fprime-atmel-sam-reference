@@ -172,8 +172,7 @@ RUN tar -xf arm-gnu-toolchain-x86_64-arm-none-eabi.tar.bz2 -C $HOME
 RUN chown -R user:user ${HOME}/arm-gnu-toolchain-12.3.rel1-x86_64-arm-none-eabi/
 ENV GCC_TOOLCHAIN_12_3_1="${HOME}/arm-gnu-toolchain-12.3.rel1-x86_64-arm-none-eabi/bin"
 
-ENV PATH="$HOME/cmsis-toolbox-linux-amd64/bin:$PATH"
-ENV CMSIS_PACK_ROOT="$WDIR/fprime-atmel/cmake/toolchain/support/sources/samv71q21b/cmsis/samv71_blink/packs"
+ENV CMSIS_PACK_ROOT="$WDIR/fprime-cmsis/cmake/toolchain/support/sources/samv71q21b/cmsis/samv71_blink/packs"
 # ENV CMSIS_PACK_ROOT="$WDIR/deps/packs"
 ENV CMSIS_COMPILER_ROOT="$HOME/cmsis-toolbox-linux-amd64/etc"
 RUN cpackget init https://www.keil.com/pack/index.pidx
@@ -182,5 +181,7 @@ RUN mkdir $HOME/ninja
 RUN wget -qO $HOME/ninja/ninja.gz https://github.com/ninja-build/ninja/releases/latest/download/ninja-linux.zip -nv
 RUN gunzip $HOME/ninja/ninja.gz
 RUN chmod a+x $HOME/ninja/ninja
+
+ENV PATH="$HOME/ninja/:$HOME/cmsis-toolbox-linux-amd64/bin:$PATH"
 
 WORKDIR $WDIR

@@ -355,7 +355,7 @@ EOF
         keil_exec "uv"
       ;;
       "cmsis-cfg")
-        cmsis_path="fprime-atmel/cmake/toolchain/support/sources/samv71q21b/cmsis"
+        cmsis_path="fprime-cmsis/cmake/toolchain/support/sources/samv71q21b/cmsis"
         flags="-w $SAM_WDIR/$cmsis_path $DEFAULT_FLAGS"
         # NOTE we often get stuck on trivial schema errors.
         # prevent this with -n
