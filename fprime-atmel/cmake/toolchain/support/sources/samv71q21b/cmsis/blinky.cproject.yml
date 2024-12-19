@@ -1,7 +1,6 @@
 project:
-  name: samv71_blinky_project
   description: Blinking LED application for SAMV71 Xplained board.
-  device: Microchip::ATSAMV71Q21B::cm7                           # Specify the vendor::device
+  device: ATSAMV71Q21B
   compiler: GCC
   define:
     - __SAMV71Q21B__
@@ -14,7 +13,7 @@ project:
   groups:
     - group: Source Files
       files:
-        - file: main.c                           # Your main application file
+        - file: src/main.c
   components:
     - component: Device:Startup                  # Startup code component
     - component: CMSIS:CORE                      # CMSIS Core component
