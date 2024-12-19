@@ -1,16 +1,8 @@
 project:
   description: Blinking LED application for SAMV71 Xplained board.
-  # NOTE this identifier is deprecated now
-  # device: ATSAMV71Q21B
   compiler: GCC
   define:
-    - __SAMV71Q21B__
-    - ARM_MATH_CM7
-    - __FPU_PRESENT=1
-    - __FPU_USED=1
     - __DEBUG                                    # Include if debugging is enabled
-  optimize: none                                  # No optimization for initial build
-  debug: on                                       # Generate debug information
   groups:
     - group: Source Files
       files:

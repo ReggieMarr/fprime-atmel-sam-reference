@@ -178,4 +178,9 @@ ENV CMSIS_PACK_ROOT="$WDIR/fprime-atmel/cmake/toolchain/support/sources/samv71q2
 ENV CMSIS_COMPILER_ROOT="$HOME/cmsis-toolbox-linux-amd64/etc"
 RUN cpackget init https://www.keil.com/pack/index.pidx
 
+RUN mkdir $HOME/ninja
+RUN wget -qO $HOME/ninja/ninja.gz https://github.com/ninja-build/ninja/releases/latest/download/ninja-linux.zip -nv
+RUN gunzip $HOME/ninja/ninja.gz
+RUN chmod a+x $HOME/ninja/ninja
+
 WORKDIR $WDIR

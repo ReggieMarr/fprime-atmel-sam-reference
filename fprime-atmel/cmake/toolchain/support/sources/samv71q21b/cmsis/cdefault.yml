@@ -2,6 +2,10 @@ default:
   misc:
     - for-compiler: GCC
       C-CPP:
+        - __SAMV71Q21B__
+        - ARM_MATH_CM7
+        - __FPU_PRESENT=1
+        - __FPU_USED=1
         - -mcpu=cortex-m7
         - -mthumb
         - -mfpu=fpv5-d16
@@ -12,6 +16,10 @@ default:
       C:
         - -std=gnu11
       ASM:
+        - __SAMV71Q21B__
+        - ARM_MATH_CM7
+        - __FPU_PRESENT=1
+        - __FPU_USED=1
         - -mcpu=cortex-m7
         - -mthumb
         - -mfpu=fpv5-d16
