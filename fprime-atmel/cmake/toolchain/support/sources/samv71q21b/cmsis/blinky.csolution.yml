@@ -1,0 +1,13 @@
+solution:
+  created-for: cmsis-toolbox@2.6
+  description: LED blinking application for the SAMV71 Xplained board.
+  cdefault:                       # use default setup of toolchain specific controls.
+  compiler: GCC
+  packs:
+    - pack: ARM::CMSIS@5.8.0                     # CMSIS Core pack
+    - pack: Microchip::SAMV71_DFP@4.10.230       # Device Family Pack for SAMV71
+  target-types:
+    - type: Board
+      board: ATSAMV71-XULT                       # Specify the SAMV71 Xplained Ultra board
+  projects:
+    - project: './blinky.cproject.yml'             # Reference to your project file

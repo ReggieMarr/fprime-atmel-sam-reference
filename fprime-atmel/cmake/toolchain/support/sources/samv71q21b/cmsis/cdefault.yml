@@ -1,0 +1,16 @@
+default:
+  misc:
+    GCC:
+      C:
+        - '-mcpu=cortex-m7'
+        - '-mthumb'
+        - '-mfpu=fpv5-d16'
+        - '-mfloat-abi=hard'
+        - '-O0'                                   # Optimization level
+        - '-g'                                    # Debug information
+        - '-Wall'                                 # Enable all warnings
+      AS:
+        - '-mcpu=cortex-m7'
+        - '-mthumb'
+        - '-mfpu=fpv5-d16'
+        - '-mfloat-abi=hard'

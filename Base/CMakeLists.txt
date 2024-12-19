@@ -2,8 +2,9 @@
 # F' Configuration
 # -----------------------------------------------------------------------------
 
-# Deployment is only compatible with the Arduino platform
-restrict_platforms(ArduinoFw)
+# Deployment is only compatible with the AtmelFw platform
+# NOTE compatible with CMSIS platform might be more accurate
+restrict_platforms(AtmelFw)
 
 ###
 # Topology and Components
