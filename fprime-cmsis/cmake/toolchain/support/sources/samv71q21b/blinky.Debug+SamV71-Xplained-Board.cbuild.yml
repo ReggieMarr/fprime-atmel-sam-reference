@@ -32,8 +32,10 @@ build:
       - -mthumb
       - -mfpu=fpv5-d16
       - -mfloat-abi=hard
+      - -specs=nosys.specs
     C:
       - -std=gnu11
+      - -specs=nosys.specs
       - -D__SAMV71Q21B__
       - -DARM_MATH_CM7
       - -mcpu=cortex-m7
@@ -53,6 +55,7 @@ build:
       - -O0
       - -g
       - -Wall
+      - -specs=nosys.specs
   define:
     - __DEBUG
     - USE_CMSIS_INIT

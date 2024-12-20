@@ -11,8 +11,10 @@ default:
         - -O0                                   # Optimization level
         - -g                                    # Debug information
         - -Wall                                 # Enable all warnings
+        - -specs=nosys.specs
       C:
         - -std=gnu11
+        - -specs=nosys.specs
       ASM:
         - -D__SAMV71Q21B__
         - -DARM_MATH_CM7
@@ -20,3 +22,4 @@ default:
         - -mthumb
         - -mfpu=fpv5-d16
         - -mfloat-abi=hard
+        - -specs=nosys.specs
