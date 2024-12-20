@@ -10,16 +10,8 @@ build-idx:
     - cbuild: blinky.Debug+SamV71-Xplained-Board.cbuild.yml
       project: blinky
       configuration: .Debug+SamV71-Xplained-Board
-      errors: true
       messages:
-        errors:
-          - "required pack: ARM::CMSIS@5.8.0 not installed"
-          - "required pack: Microchip::SAMV71_DFP@4.10.230 not installed"
-          - "specified device 'Microchip::ATSAMV71Q21B' was not found among the installed packs.\nuse 'cpackget' utility to install software packs."
-          - processing context 'blinky.Debug+SamV71-Xplained-Board' failed
         info:
-          - blinky.cbuild-pack.yml - file skipped
-          - blinky.Debug+SamV71-Xplained-Board.cbuild.yml - file is already up-to-date
-      packs-missing:
-        - pack: ARM::CMSIS@5.8.0
-        - pack: Microchip::SAMV71_DFP@4.10.230
+          - blinky.cbuild-pack.yml - file is already up-to-date
+          - SamV71-Xplained-Board.cbuild-run.yml - file is already up-to-date
+          - blinky.Debug+SamV71-Xplained-Board.cbuild.yml - file generated successfully

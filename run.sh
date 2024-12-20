@@ -359,7 +359,10 @@ EOF
         flags="-w $SAM_WDIR/$cmsis_path $DEFAULT_FLAGS"
         # NOTE we often get stuck on trivial schema errors.
         # prevent this with -n
-        cmd="csolution -v -d convert blinky.csolution.yml"
+        # cmd="csolution -v -d convert blinky.csolution.yml"
+        cmd="cbuild -v -p blinky.csolution.yml"
+        cmd="cbuild setup blinky.csolution.yml --context-set"
+        cmd="cbuild blinky.csolution.yml --context-set --packs --rebuild"
         run_docker_compose $cmd --service="sam" -- $flags
       ;;
       "mplab-cfg")

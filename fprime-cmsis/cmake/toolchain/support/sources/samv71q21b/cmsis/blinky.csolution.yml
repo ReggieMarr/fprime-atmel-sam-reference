@@ -4,9 +4,9 @@ solution:
   cdefault:                       # use default setup of toolchain specific controls.
   compiler: GCC
 
-  packs:
-    - pack: ARM::CMSIS@5.8.0                     # CMSIS Core pack
-    - pack: Microchip::SAMV71_DFP@4.10.230       # Device Family Pack for SAMV71
+  # packs:
+  #   - pack: ARM::CMSIS@5.8.0                     # CMSIS Core pack
+  #   - pack: Microchip::SAMV71_DFP@4.10.230       # Device Family Pack for SAMV71
 
   build-types:                                 # defines toolchain options for 'debug' and 'release'
     - type: Debug
