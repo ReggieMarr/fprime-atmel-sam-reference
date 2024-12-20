@@ -13,10 +13,10 @@ build-idx:
       messages:
         info:
           - blinky.cbuild-pack.yml - file is already up-to-date
-          - blinky.Debug+SamV71-Xplained-Board.cbuild.yml - file is already up-to-date
+          - SamV71-Xplained-Board.cbuild-run.yml - file is already up-to-date
+          - blinky.Debug+SamV71-Xplained-Board.cbuild.yml - file generated successfully
       packs-unused:
         - pack: ARM::CMSIS-Compiler@2.1.0
         - pack: ARM::CMSIS-Driver@2.10.0
         - pack: ARM::CMSIS-View@1.2.0
         - pack: ARM::Cortex_DFP@1.1.0
-        - pack: Keil::MDK-Middleware@7.16.0

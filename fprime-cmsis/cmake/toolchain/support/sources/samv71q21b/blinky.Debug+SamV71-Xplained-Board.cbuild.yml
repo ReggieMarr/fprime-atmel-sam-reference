@@ -55,6 +55,7 @@ build:
       - -Wall
   define:
     - __DEBUG
+    - USE_CMSIS_INIT
     - _RTE_
     - __SAMV71Q21B__
   define-asm:
@@ -67,6 +68,7 @@ build:
     - ${CMSIS_PACK_ROOT}/ARM/CMSIS-FreeRTOS/11.1.0/Source/include
     - ${CMSIS_PACK_ROOT}/ARM/CMSIS-FreeRTOS/11.1.0/Source/portable/GCC/ARM_CM7/r0p1
     - ${CMSIS_PACK_ROOT}/ARM/CMSIS/6.1.0/CMSIS/Core/Include
+    - ${CMSIS_PACK_ROOT}/ARM/CMSIS/6.1.0/CMSIS/Driver/Include
     - ${CMSIS_PACK_ROOT}/ARM/CMSIS/6.1.0/CMSIS/RTOS2/Include
     - ${CMSIS_PACK_ROOT}/Microchip/SAMV71_DFP/4.10.230/samv71b/include
   add-path-asm:
@@ -76,6 +78,7 @@ build:
     - ${CMSIS_PACK_ROOT}/ARM/CMSIS-FreeRTOS/11.1.0/Source/include
     - ${CMSIS_PACK_ROOT}/ARM/CMSIS-FreeRTOS/11.1.0/Source/portable/GCC/ARM_CM7/r0p1
     - ${CMSIS_PACK_ROOT}/ARM/CMSIS/6.1.0/CMSIS/Core/Include
+    - ${CMSIS_PACK_ROOT}/ARM/CMSIS/6.1.0/CMSIS/Driver/Include
     - ${CMSIS_PACK_ROOT}/ARM/CMSIS/6.1.0/CMSIS/RTOS2/Include
     - ${CMSIS_PACK_ROOT}/Microchip/SAMV71_DFP/4.10.230/samv71b/include
   output-dirs:
@@ -86,6 +89,19 @@ build:
     - type: elf
       file: blinky.elf
   components:
+    - component: ARM::CMSIS Driver:GPIO:Custom@1.0.0
+      from-pack: ARM::CMSIS@6.1.0
+      selected-by: ARM::CMSIS Driver:GPIO:Custom
+      implements: CMSIS Driver:GPIO@1.0.0
+      files:
+        - file: ${CMSIS_PACK_ROOT}/ARM/CMSIS/6.1.0/CMSIS/Driver/DriverTemplates/Driver_GPIO.c
+          category: sourceC
+          attr: template
+          version: 1.0.0
+          select: GPIO Driver
+        - file: ${CMSIS_PACK_ROOT}/ARM/CMSIS/6.1.0/CMSIS/Driver/Include/Driver_GPIO.h
+          category: header
+          version: 1.0.0
     - component: ARM::CMSIS:CORE@6.1.0
       condition: ARMv6_7_8-M Device
       from-pack: ARM::CMSIS@6.1.0
@@ -229,7 +245,7 @@ build:
     - component: Microchip::Device:Startup@4.10.0
       condition: ATSAMV71Q21B
       from-pack: Microchip::SAMV71_DFP@4.10.230
-      selected-by: Device:Startup
+      selected-by: Microchip::Device:Startup
       files:
         - file: ${CMSIS_PACK_ROOT}/Microchip/SAMV71_DFP/4.10.230/samv71b/include
           category: include
@@ -274,6 +290,16 @@ build:
           attr: config
           version: 4.10.0
   apis:
+    - api: CMSIS Driver:GPIO@1.0.0
+      from-pack: ARM::CMSIS@6.1.0
+      implemented-by: ARM::CMSIS Driver:GPIO:Custom@1.0.0
+      files:
+        - file: ${CMSIS_PACK_ROOT}/ARM/CMSIS/6.1.0/CMSIS/Documentation/html/Driver/group__gpio__interface__gr.html
+          category: doc
+          version: 1.0.0
+        - file: ${CMSIS_PACK_ROOT}/ARM/CMSIS/6.1.0/CMSIS/Driver/Include/Driver_GPIO.h
+          category: header
+          version: 1.0.0
     - api: CMSIS:OS Tick@1.0.1
       from-pack: ARM::CMSIS@6.1.0
       implemented-by: ARM::CMSIS:OS Tick:SysTick@1.0.5
@@ -292,9 +318,9 @@ build:
           category: header
           version: 2.3.0
   linker:
-    script: RTE/Device/ATSAMV71Q21B/samv71q21b_flash.ld
+    script: src/startup_samv71q21b.ld
   groups:
-    - group: Source Files
+    - group: Device
       files:
         - file: src/main.c
           category: sourceC
@@ -312,6 +338,7 @@ build:
         - pack: ARM::CMSIS-FreeRTOS@11.1.0
         - pack: ARM::CMSIS@6.1.0
       components:
+        - component: ARM::CMSIS Driver:GPIO:Custom@1.0.0
         - component: ARM::CMSIS:CORE@6.1.0
         - component: ARM::CMSIS:OS Tick:SysTick@1.0.5
         - component: ARM::CMSIS:RTOS2:FreeRTOS&Cortex-M@11.1.0
@@ -320,6 +347,7 @@ build:
         - component: ARM::RTOS&FreeRTOS:Event Groups@11.1.0
         - component: ARM::RTOS&FreeRTOS:Heap&Heap_4@11.1.0
         - component: ARM::RTOS&FreeRTOS:Timers@11.1.0
+        - component: CMSIS Driver:GPIO(API)
         - component: CMSIS:OS Tick(API)
         - component: CMSIS:RTOS2(API)
     - license: MIT

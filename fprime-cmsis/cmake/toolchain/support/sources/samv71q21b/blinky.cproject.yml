@@ -26,10 +26,22 @@ project:
     - component: ARM::RTOS&FreeRTOS:Heap&Heap_4
     - component: ARM::RTOS&FreeRTOS:Timers
 
+  linker:
+    - script: ./src/startup_samv71q21b.ld
+
   define:
     - __DEBUG                                    # Include if debugging is enabled
+    - USE_CMSIS_INIT
   groups:
-    - group: Source Files
+    # - group: Documentation
+    #   files:
+    #     - file: README.md
+
+    # - group: Application
+    #   files:
+    #     - file: hello.c
+
+    - group: Device
       files:
         - file: src/main.c
 
