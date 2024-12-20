@@ -2,7 +2,6 @@ solution:
   created-for: cmsis-toolbox@2.6.0
   description: LED blinking application for the SAMV71 Xplained board.
   cdefault:                       # use default setup of toolchain specific controls.
-  compiler: GCC
 
   # packs:
   #   - pack: ARM::CMSIS@5.8.0                     # CMSIS Core pack
@@ -12,6 +11,11 @@ solution:
     - type: Debug
       debug: on
       optimize: debug
+      misc:
+        - for-compiler: GCC
+          C-CPP:
+            - -O0
+            - -g
 
     # - type: Release
     #   debug: off

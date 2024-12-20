@@ -148,7 +148,7 @@
 //  <e>Setup recording level filter
 //  <i> Enable configuration of FreeRTOS events recording level
 //  <i> Default: 1
-#define configEVR_SETUP_LEVEL                     1
+#define configEVR_SETUP_LEVEL                     0
 
 //  <o>Tasks functions
 //  <i> Define event recording level bitmask for events generated from Tasks functions.
@@ -316,6 +316,9 @@
 //  <i> Default: 0
 #define configUSE_PASSIVE_IDLE_HOOK               0
 // </h>
+
+#define configASSERT(x) \
+    if ((x) == 0) taskDISABLE_INTERRUPTS()
 
 //------------- <<< end of configuration section >>> ---------------------------
 

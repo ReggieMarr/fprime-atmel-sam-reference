@@ -15,6 +15,11 @@
  */
 #define CMSIS_device_header "sam.h"
 
+/* ARM::CMSIS-Compiler:OS Interface:CMSIS-RTOS2@2.1.0 */
+#define RTE_CMSIS_Compiler_OS_Interface       /* Compiler OS Interface */
+#define RTE_CMSIS_Compiler_OS_Interface_RTOS2 /* Compiler OS Interface: CMSIS-RTOS2 */
+/* Features */
+#define RTE_CMSIS_Compiler_OS_Interface_RTOS2_LOCKS     /* Implements locking routines */
 /* ARM::CMSIS:RTOS2:FreeRTOS&Cortex-M@11.1.0 */
 #define RTE_CMSIS_RTOS2                 /* CMSIS-RTOS2 */
 #define RTE_CMSIS_RTOS2_FreeRTOS        /* CMSIS-RTOS2 FreeRTOS */

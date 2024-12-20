@@ -16,6 +16,8 @@ build:
     fpu: dp
     core: Cortex-M7
   packs:
+    - pack: ARM::CMSIS-Compiler@2.1.0
+      path: ${CMSIS_PACK_ROOT}/ARM/CMSIS-Compiler/2.1.0
     - pack: ARM::CMSIS-FreeRTOS@11.1.0
       path: ${CMSIS_PACK_ROOT}/ARM/CMSIS-FreeRTOS/11.1.0
     - pack: ARM::CMSIS@6.1.0
@@ -32,10 +34,8 @@ build:
       - -mthumb
       - -mfpu=fpv5-d16
       - -mfloat-abi=hard
-      - -specs=nosys.specs
     C:
       - -std=gnu11
-      - -specs=nosys.specs
       - -D__SAMV71Q21B__
       - -DARM_MATH_CM7
       - -mcpu=cortex-m7
@@ -55,7 +55,9 @@ build:
       - -O0
       - -g
       - -Wall
+    Link:
       - -specs=nosys.specs
+      - -specs=nano.specs
   define:
     - __DEBUG
     - USE_CMSIS_INIT
@@ -67,6 +69,7 @@ build:
   add-path:
     - RTE/RTOS
     - RTE/_Debug_SamV71-Xplained-Board
+    - ${CMSIS_PACK_ROOT}/ARM/CMSIS-Compiler/2.1.0/include/gcc
     - ${CMSIS_PACK_ROOT}/ARM/CMSIS-FreeRTOS/11.1.0/CMSIS/RTOS2/FreeRTOS/Include
     - ${CMSIS_PACK_ROOT}/ARM/CMSIS-FreeRTOS/11.1.0/Source/include
     - ${CMSIS_PACK_ROOT}/ARM/CMSIS-FreeRTOS/11.1.0/Source/portable/GCC/ARM_CM7/r0p1
@@ -77,6 +80,7 @@ build:
   add-path-asm:
     - RTE/RTOS
     - RTE/_Debug_SamV71-Xplained-Board
+    - ${CMSIS_PACK_ROOT}/ARM/CMSIS-Compiler/2.1.0/include/gcc
     - ${CMSIS_PACK_ROOT}/ARM/CMSIS-FreeRTOS/11.1.0/CMSIS/RTOS2/FreeRTOS/Include
     - ${CMSIS_PACK_ROOT}/ARM/CMSIS-FreeRTOS/11.1.0/Source/include
     - ${CMSIS_PACK_ROOT}/ARM/CMSIS-FreeRTOS/11.1.0/Source/portable/GCC/ARM_CM7/r0p1
@@ -105,6 +109,23 @@ build:
         - file: ${CMSIS_PACK_ROOT}/ARM/CMSIS/6.1.0/CMSIS/Driver/Include/Driver_GPIO.h
           category: header
           version: 1.0.0
+    - component: ARM::CMSIS-Compiler:CORE@1.1.0
+      condition: GCC CortexDevice
+      from-pack: ARM::CMSIS-Compiler@2.1.0
+      selected-by: CMSIS-Compiler:CORE
+      files:
+        - file: ${CMSIS_PACK_ROOT}/ARM/CMSIS-Compiler/2.1.0/source/gcc/retarget_syscalls.c
+          category: sourceC
+          version: 1.1.0
+    - component: ARM::CMSIS-Compiler:OS Interface:CMSIS-RTOS2@2.1.0
+      condition: GCC CORE CMSIS-RTOS2
+      from-pack: ARM::CMSIS-Compiler@2.1.0
+      selected-by: CMSIS-Compiler:OS Interface:CMSIS-RTOS2
+      implements: CMSIS-Compiler:OS Interface@1.1.0
+      files:
+        - file: ${CMSIS_PACK_ROOT}/ARM/CMSIS-Compiler/2.1.0/source/gcc/retarget_lock_rtos2.c
+          category: sourceC
+          version: 2.1.0
     - component: ARM::CMSIS:CORE@6.1.0
       condition: ARMv6_7_8-M Device
       from-pack: ARM::CMSIS@6.1.0
@@ -303,6 +324,17 @@ build:
         - file: ${CMSIS_PACK_ROOT}/ARM/CMSIS/6.1.0/CMSIS/Driver/Include/Driver_GPIO.h
           category: header
           version: 1.0.0
+    - api: CMSIS-Compiler:OS Interface@1.1.0
+      condition: GCC CortexDevice
+      from-pack: ARM::CMSIS-Compiler@2.1.0
+      implemented-by: ARM::CMSIS-Compiler:OS Interface:CMSIS-RTOS2@2.1.0
+      files:
+        - file: ${CMSIS_PACK_ROOT}/ARM/CMSIS-Compiler/2.1.0/documentation/html/group__retarget__os__newlib.html
+          category: doc
+          version: 1.1.0
+        - file: ${CMSIS_PACK_ROOT}/ARM/CMSIS-Compiler/2.1.0/include/gcc/retarget_os.h
+          category: header
+          version: 1.1.0
     - api: CMSIS:OS Tick@1.0.1
       from-pack: ARM::CMSIS@6.1.0
       implemented-by: ARM::CMSIS:OS Tick:SysTick@1.0.5
@@ -338,10 +370,13 @@ build:
         - component: Microchip::Device:Startup@4.10.0
     - license: Apache-2.0
       packs:
+        - pack: ARM::CMSIS-Compiler@2.1.0
         - pack: ARM::CMSIS-FreeRTOS@11.1.0
         - pack: ARM::CMSIS@6.1.0
       components:
         - component: ARM::CMSIS Driver:GPIO:Custom@1.0.0
+        - component: ARM::CMSIS-Compiler:CORE@1.1.0
+        - component: ARM::CMSIS-Compiler:OS Interface:CMSIS-RTOS2@2.1.0
         - component: ARM::CMSIS:CORE@6.1.0
         - component: ARM::CMSIS:OS Tick:SysTick@1.0.5
         - component: ARM::CMSIS:RTOS2:FreeRTOS&Cortex-M@11.1.0
@@ -351,6 +386,7 @@ build:
         - component: ARM::RTOS&FreeRTOS:Heap&Heap_4@11.1.0
         - component: ARM::RTOS&FreeRTOS:Timers@11.1.0
         - component: CMSIS Driver:GPIO(API)
+        - component: CMSIS-Compiler:OS Interface(API)
         - component: CMSIS:OS Tick(API)
         - component: CMSIS:RTOS2(API)
     - license: MIT
