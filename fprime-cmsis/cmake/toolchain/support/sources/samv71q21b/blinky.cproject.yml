@@ -1,15 +1,38 @@
 project:
   description: Blinking LED application for SAMV71 Xplained board.
   compiler: GCC
+  packs:
+    - pack: Microchip::SAMV71_DFP@4.10.230
+    # - pack: Keil::MDK-Middleware@7.16.0
+    - pack: ARM::CMSIS@6.1.0
+    - pack: ARM::Cortex_DFP@1.1.0
+    - pack: ARM::CMSIS-Driver@2.10.0
+    - pack: ARM::CMSIS-Compiler@2.1.0
+    - pack: ARM::CMSIS-View@1.2.0
+    - pack: ARM::CMSIS-FreeRTOS@11.1.0
+
+  components:
+    - component: CMSIS:CORE                      # CMSIS Core component
+    - component: CMSIS:OS Tick:SysTick
+    # - component: CMSIS:RTOS2:Keil RTX5&Source
+    # - component: Device:PIN
+
+    - component: ARM::CMSIS Driver:GPIO:Custom
+    - component: Microchip::Device:Startup
+    - component: ARM::CMSIS:RTOS2:FreeRTOS&Cortex-M
+    - component: ARM::RTOS&FreeRTOS:Config&CMSIS RTOS2
+    - component: ARM::RTOS&FreeRTOS:Core&Cortex-M
+    - component: ARM::RTOS&FreeRTOS:Event Groups
+    - component: ARM::RTOS&FreeRTOS:Heap&Heap_4
+    - component: ARM::RTOS&FreeRTOS:Timers
+
   define:
     - __DEBUG                                    # Include if debugging is enabled
   groups:
     - group: Source Files
       files:
         - file: src/main.c
-  components:
-    # - component: Device:Startup                  # Startup code component
-    - component: CMSIS:CORE                      # CMSIS Core component
-  packs:
-    - pack: ARM::CMSIS@5.9.0
-    - pack: Microchip::SAMV71_DFP@4.10.230
+
+  # layers:
+  #   - layer: $Target-Layer$
+  #     type: Target
