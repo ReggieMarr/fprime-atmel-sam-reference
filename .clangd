@@ -1,3 +1,3 @@
 CompileFlags:
-  CompilationDatabase: "./Base/build"
+  CompilationDatabase: "./fprime-cmsis/cmake/toolchain/support/sources/samv71q21b/out/blinky/SamV71-Xplained-Board/Debug/"
   Compiler: c++

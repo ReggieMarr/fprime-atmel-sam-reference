@@ -1,5 +1,8 @@
 project:
   compiler: GCC
+  language-C: c11
+  language-CPP: c++11
+
   # NOTE an alternative method for passing flags on a per project basis
   # misc:
   #   - for-compiler: GCC
@@ -49,9 +52,24 @@ project:
     #   files:
     #     - file: hello.c
 
+    # - group: Device
+    #   add-path:
+    #     - RTE/Device/ATSAMV71Q21B
+    #   files:
+    #     - file: RTE/Device/ATSAMV71Q21B/interrupts.c
+    #     - file: src/main.c
+    #     - file: src/freeRTOS_hooks.c
+    #     - file: src/Driver_GPIO.c
+
     - group: Device
+      add-path:
+        - RTE/Device/ATSAMV71Q21B
       files:
+        - file: harmony/sam_v71_xult/peripheral/pio/interrupts.c
+        - file: RTE/Device/ATSAMV71Q21B/interrupts.c
         - file: src/main.c
+        - file: src/freeRTOS_hooks.c
+        - file: src/Driver_GPIO.c
 
   # layers:
   #   - layer: $Target-Layer$

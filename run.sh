@@ -302,7 +302,6 @@ EOF
         MOD_DICT_CMD="sed -i \"s|${SAM_WDIR}|${SCRIPT_DIR}|g\" \"${SCRIPT_DIR}/Base/build/compile_commands.json\""
 
         exec_cmd "$MOD_DICT_CMD"
-
       ;;
       "keil-cfg")
         keil_exec "build"
@@ -355,15 +354,22 @@ EOF
         keil_exec "uv"
       ;;
       "cmsis-cfg")
-        cmsis_path="fprime-cmsis/cmake/toolchain/support/sources/samv71q21b/cmsis"
+        cmsis_path="fprime-cmsis/cmake/toolchain/support/sources/samv71q21b"
         flags="-w $SAM_WDIR/$cmsis_path $DEFAULT_FLAGS"
         # NOTE we often get stuck on trivial schema errors.
         # prevent this with -n
         # cmd="csolution -v -d convert blinky.csolution.yml"
-        cmd="cbuild -v -p blinky.csolution.yml"
-        cmd="cbuild setup blinky.csolution.yml --context-set"
-        cmd="cbuild blinky.csolution.yml --context-set --packs --rebuild"
+        # cmd="cbuild -v -p blinky.csolution.yml"
+        # cmd="cbuild setup blinky.csolution.yml --context-set"
+        cmd="cbuild blinky.csolution.yml -v -d --context-set --packs --rebuild"
         run_docker_compose $cmd --service="sam" -- $flags
+
+        tmp_compile_commands="${SCRIPT_DIR}/${cmsis_path}/tmp/1/compile_commands.json"
+        out_compile_commands="${SCRIPT_DIR}/${cmsis_path}/out/blinky/SamV71-Xplained-Board/Debug/compile_commands.json"
+        MOD_DICT_CMD="sed -i \"s|${SAM_WDIR}|${SCRIPT_DIR}|g\" \"${out_compile_commands}\""
+                      # sed -i  "s|/fprime-atmel-sam-reference/|$(pwd)|g" "$(pwd)/fprime-cmsis/cmake/toolchain/support/sources/samv71q21b/tmp/1/compile_commands.json"
+
+        exec_cmd "$MOD_DICT_CMD"
       ;;
       "mplab-cfg")
         mplab_exec "mplab_ide"

@@ -26,6 +26,8 @@ build:
       path: ${CMSIS_PACK_ROOT}/Microchip/SAMV71_DFP/4.10.230
   optimize: debug
   debug: on
+  language-C: c11
+  language-CPP: c++11
   misc:
     ASM:
       - -D__SAMV71Q21B__
@@ -356,8 +358,16 @@ build:
     script: src/startup_samv71q21b.ld
   groups:
     - group: Device
+      add-path:
+        - RTE/Device/ATSAMV71Q21B
       files:
+        - file: RTE/Device/ATSAMV71Q21B/interrupts.c
+          category: sourceC
         - file: src/main.c
+          category: sourceC
+        - file: src/freeRTOS_hooks.c
+          category: sourceC
+        - file: src/Driver_GPIO.c
           category: sourceC
   constructed-files:
     - file: RTE/_Debug_SamV71-Xplained-Board/RTE_Components.h

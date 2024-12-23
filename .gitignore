@@ -7,8 +7,6 @@ gtest/
 compile_commands.json
 AutoXML/
 test_harness/src/test_harness-C/application.out
-/.project
-/.cproject
 *.pyc
 *.o
 *Ac.*

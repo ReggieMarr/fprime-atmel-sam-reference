@@ -375,7 +375,10 @@
   /* Cortex-M specifics */
   /* Map the FreeRTOS port interrupt handlers to their CMSIS standard names. */
   #define xPortPendSVHandler                      PendSV_Handler
-  #define vPortSVCHandler                         SVC_Handler
+  // For the samv71 the term SVCall_Handler is used instead.
+  // Use a weak reference alias if both aliases are required
+  /* #define vPortSVCHandler                         SVC_Handler */
+  #define vPortSVCHandler                         SVCall_Handler
 
   /* Ensure Cortex-M port compatibility. */
   #define SysTick_Handler                         xPortSysTickHandler

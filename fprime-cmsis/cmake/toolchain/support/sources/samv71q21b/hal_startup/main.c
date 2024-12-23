@@ -1,4 +1,6 @@
 #include "sam.h"
+#include "device_common.h"
+#include "cmsis_os2.h"
 
 #define LED0_PIN    PIO_PA23
 #define LED_PIO     PIOA_REGS
@@ -37,9 +39,7 @@ void delay_ms(uint32_t ms) {
     }
 }
 
-int main(void) {
-    setupLeds();
-
+void app_main (void *argument) {
     while(1) {
         // Set output (LED OFF)
         LED1_PIO->PIO_SODR = LED1_PIN;
@@ -48,6 +48,17 @@ int main(void) {
         LED1_PIO->PIO_CODR = LED1_PIN;
         delay_ms(500);
     }
+}
+
+int main(void) {
+    setupLeds();
+
+    // System Initialization
+    SystemCoreClockUpdate();
+
+    osKernelInitialize();                 // Initialize CMSIS-RTOS
+    osThreadNew(app_main, NULL, NULL);    // Create application main thread
+    osKernelStart();                      // Start thread execution
 
     return 0;
 }

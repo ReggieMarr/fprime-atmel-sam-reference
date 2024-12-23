@@ -12,6 +12,7 @@ build-idx:
       configuration: .Debug+SamV71-Xplained-Board
       messages:
         info:
+          - "config files for each component:\n  ARM::RTOS&FreeRTOS:Config&CMSIS RTOS2@11.1.0:\n    - /fprime-atmel-sam-reference/fprime-cmsis/cmake/toolchain/support/sources/samv71q21b/RTE/RTOS/FreeRTOSConfig.h (base@10.6.0)\n  Microchip::Device:Startup@4.10.0:\n    - /fprime-atmel-sam-reference/fprime-cmsis/cmake/toolchain/support/sources/samv71q21b/RTE/Device/ATSAMV71Q21B/samv71q21b_flash.ld (base@4.10.0)\n    - /fprime-atmel-sam-reference/fprime-cmsis/cmake/toolchain/support/sources/samv71q21b/RTE/Device/ATSAMV71Q21B/samv71q21b_sram.ld (base@4.10.0)\n    - /fprime-atmel-sam-reference/fprime-cmsis/cmake/toolchain/support/sources/samv71q21b/RTE/Device/ATSAMV71Q21B/startup_samv71q21b.c (base@4.10.0)\n    - /fprime-atmel-sam-reference/fprime-cmsis/cmake/toolchain/support/sources/samv71q21b/RTE/Device/ATSAMV71Q21B/system_samv71q21b.c (base@4.10.0)"
           - blinky.cbuild-pack.yml - file is already up-to-date
           - SamV71-Xplained-Board.cbuild-run.yml - file is already up-to-date
           - blinky.Debug+SamV71-Xplained-Board.cbuild.yml - file is already up-to-date
