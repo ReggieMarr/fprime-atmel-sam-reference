@@ -1,5 +1,5 @@
 #include "sam.h"
-#include "device_common.h"
+#include "hal_defs.h"
 #include "cmsis_os2.h"
 
 #define LED0_PIN    PIO_PA23

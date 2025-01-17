@@ -16,6 +16,7 @@ solution:
           C-CPP:
             - -O0
             - -g
+            - -fdiagnostics-color=always
 
     # - type: Release
     #   debug: off

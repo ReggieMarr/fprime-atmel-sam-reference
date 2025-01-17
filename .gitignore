@@ -41,12 +41,15 @@ doxygen
 .scrub*
 .coverity*
 coverity.out
-#*#
 .#*
 
-**/docs/*.html
+**packs**
+**tmp**
+**.mplab
+**cmsis-toolbox
+**.html
 *-template
-
+*SAMV71-XULT*
 logs
 
 test_harness/.autotools

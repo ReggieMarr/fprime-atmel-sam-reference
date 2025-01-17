@@ -4,6 +4,12 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    environment:
+      - TERM=xterm-256color
+      - FORCE_COLOR=1
+      - CMAKE_COLOR_DIAGNOSTICS=ON
+      - NINJA_COLOR=1
+    tty: true
     network_mode: host
     volumes:
       - ./:$SAM_WDIR

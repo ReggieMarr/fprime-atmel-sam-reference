@@ -12,6 +12,7 @@
 #include <Drv/GpioDriverComponentAc.hpp>
 #include "GpioDriver.hpp"
 #include <FpConfig.hpp>
+#include "Driver_GPIO.h"
 
 namespace Atmel {
 

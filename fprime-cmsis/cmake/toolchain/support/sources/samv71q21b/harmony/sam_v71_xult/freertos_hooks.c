@@ -54,6 +54,7 @@
 * Note(s)     : none.
 *********************************************************************************************************
 */
+// TODO port over those used in arduino example
 void vApplicationStackOverflowHook( TaskHandle_t pxTask, char *pcTaskName )
 {
    ( void ) pcTaskName;
@@ -95,6 +96,7 @@ void vApplicationStackOverflowHook( TaskHandle_t pxTask, char *pcTaskName )
 *********************************************************************************************************
 */
 
+// TODO port over those used in arduino example
 void vApplicationMallocFailedHook( void )
 {
    /* vApplicationMallocFailedHook() will only be called if
@@ -164,6 +166,27 @@ void vAssertCalled( const char * pcFile, unsigned long ulLine )
 }
 /*-----------------------------------------------------------*/
 
+// Runtime statistics variables
+static unsigned long ulHighFrequencyTimerTicks = 0;
+
+#ifndef configSUPPORT_STATIC_ALLOCATION
+#error "This rtos implementation assumes static allocation support"
+#endif
+
+void configureDWTForRunTimeStats(void)
+{
+    /* Configure DWT for runtime stats */
+    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+    DWT->CYCCNT = 0;
+    ulHighFrequencyTimerTicks = 0;
+}
+
+unsigned long getTimerValue(void)
+{
+    /* Return the current timer value for runtime stats */
+    return DWT->CYCCNT;
+}
 
 /*******************************************************************************
  End of File

@@ -356,12 +356,13 @@ EOF
       "cmsis-cfg")
         cmsis_path="fprime-cmsis/cmake/toolchain/support/sources/samv71q21b"
         flags="-w $SAM_WDIR/$cmsis_path $DEFAULT_FLAGS"
+        flags+=" -e TERM=xterm-256color -e FORCE_COLOR=1 -e CMAKE_COLOR_DIAGNOSTICS=ON -e NINJA_COLOR=1 "
         # NOTE we often get stuck on trivial schema errors.
         # prevent this with -n
         # cmd="csolution -v -d convert blinky.csolution.yml"
         # cmd="cbuild -v -p blinky.csolution.yml"
         # cmd="cbuild setup blinky.csolution.yml --context-set"
-        cmd="cbuild blinky.csolution.yml -v -d --context-set --packs --rebuild"
+        cmd="TERM=xterm-256color FORCE_COLOR=1 CMAKE_COLOR_DIAGNOSTICS=ON NINJA_COLOR=1 cbuild blinky.csolution.yml -d --context-set --packs --rebuild"
         run_docker_compose $cmd --service="sam" -- $flags
 
         tmp_compile_commands="${SCRIPT_DIR}/${cmsis_path}/tmp/1/compile_commands.json"

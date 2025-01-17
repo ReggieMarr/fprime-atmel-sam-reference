@@ -28,4 +28,14 @@ extern void Dummy_Handler(void);
 int main(void);
 /** \endcond */
 
+#define OK 0
+#define ERROR -1
+#define CHECK(cond, err_string, ...)                                       \
+  do {                                                                     \
+    if (!(cond)) {                                                         \
+      __VA_ARGS__;                                                         \
+      break;                                                               \
+    }                                                                      \
+  } while (0);
+
 #endif // _DEVICE_COMMON_H

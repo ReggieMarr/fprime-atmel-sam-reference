@@ -38,38 +38,64 @@ project:
     - component: ARM::RTOS&FreeRTOS:Timers
 
   linker:
-    - script: ./src/startup_samv71q21b.ld
+    - script: ./hal_startup/startup_samv71q21b.ld
 
   define:
     - __DEBUG                                    # Include if debugging is enabled
     - USE_CMSIS_INIT
+
+  add-path:
+    - hal_startup
+
+  # NOTE should move this to a device specific group/layer
   groups:
     # - group: Documentation
     #   files:
     #     - file: README.md
 
-    # - group: Application
-    #   files:
-    #     - file: hello.c
-
-    # - group: Device
-    #   add-path:
-    #     - RTE/Device/ATSAMV71Q21B
-    #   files:
-    #     - file: RTE/Device/ATSAMV71Q21B/interrupts.c
-    #     - file: src/main.c
-    #     - file: src/freeRTOS_hooks.c
-    #     - file: src/Driver_GPIO.c
-
-    - group: Device
+    - group: Device_Harmony_Periph
       add-path:
-        - RTE/Device/ATSAMV71Q21B
+        - harmony/sam_v71_xult
       files:
-        - file: harmony/sam_v71_xult/peripheral/pio/interrupts.c
-        - file: RTE/Device/ATSAMV71Q21B/interrupts.c
-        - file: src/main.c
-        - file: src/freeRTOS_hooks.c
-        - file: src/Driver_GPIO.c
+        - file: harmony/sam_v71_xult/peripheral/clk/plib_clk.c
+        - file: harmony/sam_v71_xult/peripheral/pio/plib_pio.c
+        - file: harmony/sam_v71_xult/peripheral/nvic/plib_nvic.c
+        - file: harmony/sam_v71_xult/peripheral/twihs/master/plib_twihs0_master.c
+        - file: harmony/sam_v71_xult/peripheral/efc/plib_efc.c
+        - file: harmony/sam_v71_xult/peripheral/usart/plib_usart1.c
+
+    - group: Device_Harmony_OS
+      add-path:
+        - harmony/sam_v71_xult
+      files:
+        - file: harmony/sam_v71_xult/osal/osal_freertos.c
+
+    - group: Device_Harmony_Drivers
+      add-path:
+        - harmony/sam_v71_xult
+      files:
+        - file: harmony/sam_v71_xult/driver/i2c/src/drv_i2c.c
+        - file: harmony/sam_v71_xult/driver/usart/src/drv_usart.c
+
+    - group: Device_Harmony_HAL
+      add-path:
+        - harmony/sam_v71_xult
+      files:
+        - file: harmony/sam_v71_xult/interrupts.c
+        - file: harmony/sam_v71_xult/freertos_hooks.c
+
+    - group: CMSIS_IMPLS
+      add-path:
+        - cmsis/samv71_blink/packs/ARM/CMSIS-Driver/2.10.0/
+        - harmony/sam_v71_xult
+      files:
+        - file: cmsis/samv71_blink/impls/Driver_GPIO.c
+        - file: cmsis/samv71_blink/impls/Driver_I2C.c
+        - file: cmsis/samv71_blink/impls/Driver_USART.c
+
+    - group: Device_HAL
+      files:
+        - file: hal_startup/main.c
 
   # layers:
   #   - layer: $Target-Layer$

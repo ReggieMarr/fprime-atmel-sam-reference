@@ -27,7 +27,7 @@
  *
  */
 
-#include "device_common.h"
+#include "hal_defs.h"
 
 void __libc_init_array(void);
 
