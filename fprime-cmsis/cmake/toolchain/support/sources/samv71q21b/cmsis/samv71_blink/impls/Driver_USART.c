@@ -18,6 +18,7 @@
 
 #include "Driver_USART.h"
 #include <stdint.h>
+#include <string.h>
 #include "driver/usart/drv_usart.h"
 #include "peripheral/usart/plib_usart1.h"
 #include "system/system_module.h"
