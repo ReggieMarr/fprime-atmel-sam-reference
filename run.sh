@@ -303,6 +303,25 @@ EOF
 
         exec_cmd "$MOD_DICT_CMD"
       ;;
+      "cmsis-startup")
+        cmsis_path="fprime-cmsis/cmake/toolchain/support/sources/samv71q21b"
+        flags="-w $SAM_WDIR/$cmsis_path $DEFAULT_FLAGS"
+        flags+=" -e TERM=xterm-256color -e FORCE_COLOR=1 -e CMAKE_COLOR_DIAGNOSTICS=ON -e NINJA_COLOR=1 "
+        # NOTE we often get stuck on trivial schema errors.
+        # prevent this with -n
+        # cmd="csolution -v -d convert blinky.csolution.yml"
+        # cmd="cbuild -v -p blinky.csolution.yml"
+        # cmd="cbuild setup blinky.csolution.yml --context-set"
+        cmd="TERM=xterm-256color FORCE_COLOR=1 CMAKE_COLOR_DIAGNOSTICS=ON NINJA_COLOR=1 cbuild blinky.csolution.yml -d --context-set --packs --rebuild"
+        run_docker_compose $cmd --service="sam" -- $flags
+
+        tmp_compile_commands="${SCRIPT_DIR}/${cmsis_path}/tmp/1/compile_commands.json"
+        out_compile_commands="${SCRIPT_DIR}/${cmsis_path}/out/blinky/SamV71-Xplained-Board/Debug/compile_commands.json"
+        MOD_DICT_CMD="sed -i \"s|${SAM_WDIR}|${SCRIPT_DIR}|g\" \"${out_compile_commands}\""
+                      # sed -i  "s|/fprime-atmel-sam-reference/|$(pwd)|g" "$(pwd)/fprime-cmsis/cmake/toolchain/support/sources/samv71q21b/tmp/1/compile_commands.json"
+
+        exec_cmd "$MOD_DICT_CMD"
+      ;;
       "keil-cfg")
         keil_exec "build"
       ;;
@@ -345,6 +364,29 @@ EOF
     esac
     ;;
 
+  "load")
+    EXEC_TARGET=${2:-}
+    [ -z "$EXEC_TARGET" ] && { echo "Error: must specify target to exec"; exit 1; }
+
+    case $EXEC_TARGET in
+      "cmsis-startup")
+        cfg_path=".vscode/atsamv71_xplained_edbg.cfg"
+        bin_path="./fprime-cmsis/cmake/toolchain/support/sources/samv71q21b/out/blinky/SamV71-Xplained-Board/Debug/blinky.elf"
+        # bin_path="./Base/build/base_app_SAMV71Q21B.elf"
+        program_cmd="init; reset halt; program $bin_path preverify verify reset exit"
+        # program_cmd="init; reset halt; exit"
+        load_cmd="openocd -d1 -f $cfg_path -c \"$program_cmd\""
+
+        # run_docker_compose $cmd --service="sam" -- $flags
+        exec_cmd "$load_cmd"
+      ;;
+      *)
+      echo "Invalid operation."
+      exit 1
+      ;;
+    esac
+    ;;
+
   "exec")
     EXEC_TARGET=${2:-}
     [ -z "$EXEC_TARGET" ] && { echo "Error: must specify target to exec"; exit 1; }
@@ -352,25 +394,6 @@ EOF
     case $EXEC_TARGET in
       "keil-cfg")
         keil_exec "uv"
-      ;;
-      "cmsis-cfg")
-        cmsis_path="fprime-cmsis/cmake/toolchain/support/sources/samv71q21b"
-        flags="-w $SAM_WDIR/$cmsis_path $DEFAULT_FLAGS"
-        flags+=" -e TERM=xterm-256color -e FORCE_COLOR=1 -e CMAKE_COLOR_DIAGNOSTICS=ON -e NINJA_COLOR=1 "
-        # NOTE we often get stuck on trivial schema errors.
-        # prevent this with -n
-        # cmd="csolution -v -d convert blinky.csolution.yml"
-        # cmd="cbuild -v -p blinky.csolution.yml"
-        # cmd="cbuild setup blinky.csolution.yml --context-set"
-        cmd="TERM=xterm-256color FORCE_COLOR=1 CMAKE_COLOR_DIAGNOSTICS=ON NINJA_COLOR=1 cbuild blinky.csolution.yml -d --context-set --packs --rebuild"
-        run_docker_compose $cmd --service="sam" -- $flags
-
-        tmp_compile_commands="${SCRIPT_DIR}/${cmsis_path}/tmp/1/compile_commands.json"
-        out_compile_commands="${SCRIPT_DIR}/${cmsis_path}/out/blinky/SamV71-Xplained-Board/Debug/compile_commands.json"
-        MOD_DICT_CMD="sed -i \"s|${SAM_WDIR}|${SCRIPT_DIR}|g\" \"${out_compile_commands}\""
-                      # sed -i  "s|/fprime-atmel-sam-reference/|$(pwd)|g" "$(pwd)/fprime-cmsis/cmake/toolchain/support/sources/samv71q21b/tmp/1/compile_commands.json"
-
-        exec_cmd "$MOD_DICT_CMD"
       ;;
       "mplab-cfg")
         mplab_exec "mplab_ide"

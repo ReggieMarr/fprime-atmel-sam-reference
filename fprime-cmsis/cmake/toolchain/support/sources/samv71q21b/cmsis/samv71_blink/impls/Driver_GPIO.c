@@ -29,6 +29,7 @@ static ARM_GPIO_SignalEvent_t gpio_cb_event = NULL;
 static int32_t GPIO_Setup(ARM_GPIO_Pin_t pin, ARM_GPIO_SignalEvent_t cb_event)
 {
     int32_t result = ARM_DRIVER_OK;
+    /* NOTE in here we should check whether the PIO_INITIALIZE has been set */
 
     if (PIN_IS_AVAILABLE(pin)) {
         // Store callback

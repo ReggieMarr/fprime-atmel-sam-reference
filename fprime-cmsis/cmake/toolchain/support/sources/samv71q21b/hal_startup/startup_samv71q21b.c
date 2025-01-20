@@ -23,7 +23,7 @@ __STATIC_INLINE void FPU_Enable(void)
 #endif
 
 // Pre-Main startup bootstrap
-void _on_bootstrap(void) {
+void __attribute__((weak)) _on_bootstrap(void) {
     /* Initialize the SAM system */
     /* Enable ICache (CMSIS-Core API) */
     SCB_EnableICache();

@@ -46,6 +46,8 @@ project:
 
   add-path:
     - hal_startup
+    # here for the RTE compiled commands
+    - harmony/sam_v71_xult
 
   # NOTE should move this to a device specific group/layer
   groups:
@@ -83,19 +85,22 @@ project:
       files:
         - file: harmony/sam_v71_xult/interrupts.c
         - file: harmony/sam_v71_xult/freertos_hooks.c
+        - file: harmony/sam_v71_xult/initialization.c
 
-    - group: CMSIS_IMPLS
-      add-path:
-        - cmsis/samv71_blink/packs/ARM/CMSIS-Driver/2.10.0/
-        - harmony/sam_v71_xult
-      files:
-        - file: cmsis/samv71_blink/impls/Driver_GPIO.c
-        - file: cmsis/samv71_blink/impls/Driver_I2C.c
-        - file: cmsis/samv71_blink/impls/Driver_USART.c
+    # - group: CMSIS_IMPLS
+    #   add-path:
+    #     - cmsis/samv71_blink/packs/ARM/CMSIS-Driver/2.10.0/
+    #     - harmony/sam_v71_xult
+    #   files:
+    #     - file: cmsis/samv71_blink/impls/Driver_GPIO.c
+    #     - file: cmsis/samv71_blink/impls/Driver_I2C.c
+    #     - file: cmsis/samv71_blink/impls/Driver_USART.c
 
     - group: Device_HAL
       files:
         - file: hal_startup/main.c
+      add-path:
+        - harmony/sam_v71_xult
 
   # layers:
   #   - layer: $Target-Layer$

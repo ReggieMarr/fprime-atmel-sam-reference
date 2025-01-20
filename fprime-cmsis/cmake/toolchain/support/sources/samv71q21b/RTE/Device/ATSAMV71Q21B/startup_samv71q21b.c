@@ -1,41 +1,46 @@
-/**
- * \file
- *
- * \brief GCC startup file for ATSAMV71Q21B
- *
- * Copyright (c) 2023 Microchip Technology Inc.
- *
- * \license_start
- *
- * \page License
- *
- * SPDX-License-Identifier: Apache-2.0
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- * \license_stop
- *
- */
+#include "sam.h"
+#include "device_vectors.h"
+#include "startup_samv71q21b.h"
+#include "FreeRTOS.h"
+#include "interrupts.h"
+#include "definitions.h"
 
-#include "hal_defs.h"
 
-void __libc_init_array(void);
+#ifdef __FPU_PRESENT
+/* Enable FPU */
+__STATIC_INLINE void FPU_Enable(void)
+{
+    uint32_t primask = __get_PRIMASK();
+    __disable_irq();
+    SCB->CPACR |= (((uint32_t)0xFU) << 20);
+    __DSB();
+    __ISB();
+
+    if (primask == 0U)
+    {
+        __enable_irq();
+    }
+}
+#endif
+
+// Pre-Main startup bootstrap
+void __attribute__((weak)) _on_bootstrap(void) {
+    /* Initialize the SAM system */
+    /* Enable ICache (CMSIS-Core API) */
+    SCB_EnableICache();
+
+    /* Enable DCache (CMSIS-Core API)*/
+    SCB_EnableDCache();
+
+    SYS_Initialize(NULL);
+}
 
 /**
  * \brief This is the code that gets called on processor reset.
  * To initialize the device, and call the main() routine.
  */
-void Reset_Handler(void)
+void __attribute__((section(".text.Reset_Handler"), long_call, naked, externally_visible))
+Reset_Handler(void)
 {
         uint32_t *pSrc, *pDest;
 
@@ -58,22 +63,27 @@ void Reset_Handler(void)
         pSrc = (uint32_t *) & _sfixed;
         SCB->VTOR = ((uint32_t) pSrc & SCB_VTOR_TBLOFF_Msk);
 
-        /* Call the optional application-provided _on_reset() function. */
-        if (_on_reset) {
-                _on_reset();
-        }
+        /* Call the application-provided _on_reset() function. */
+        /* _on_reset(); */
+
+        // TODO check this
+        #ifdef __FPU_PRESENT
+        /* Enable the FPU if the application is built with -mfloat-abi=softfp or -mfloat-abi=hard */
+        FPU_Enable();
+        #endif
 
         /* Initialize the C library */
         __libc_init_array();
 
-        /* Call the optional application-provided _on_bootstrap() function. */
-        if (_on_bootstrap) {
-                _on_bootstrap();
-        }
+        /* Call the application-provided _on_bootstrap() function. */
+        _on_bootstrap();
 
         /* Branch to main function */
+        /* int __launchStatus = main(); */
+        // TODO do something to handle this being an error
         main();
 
-        /* Infinite loop */
-        while (1);
+        // TODO should have some sort of led flickering induced here
+        // Should never reach here (since main should be calling a while loop)
+        /* return (EXIT_FAILURE); */
 }

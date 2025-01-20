@@ -72,6 +72,7 @@ build:
     - __SAMV71Q21B__
   add-path:
     - hal_startup
+    - harmony/sam_v71_xult
     - RTE/RTOS
     - RTE/_Debug_SamV71-Xplained-Board
     - ${CMSIS_PACK_ROOT}/ARM/CMSIS-Compiler/2.1.0/include/gcc
@@ -398,18 +399,11 @@ build:
           category: sourceC
         - file: harmony/sam_v71_xult/freertos_hooks.c
           category: sourceC
-    - group: CMSIS_IMPLS
-      add-path:
-        - ${CMSIS_PACK_ROOT}/ARM/CMSIS-Driver/2.10.0
-        - harmony/sam_v71_xult
-      files:
-        - file: cmsis/samv71_blink/impls/Driver_GPIO.c
-          category: sourceC
-        - file: cmsis/samv71_blink/impls/Driver_I2C.c
-          category: sourceC
-        - file: cmsis/samv71_blink/impls/Driver_USART.c
+        - file: harmony/sam_v71_xult/initialization.c
           category: sourceC
     - group: Device_HAL
+      add-path:
+        - harmony/sam_v71_xult
       files:
         - file: hal_startup/main.c
           category: sourceC
