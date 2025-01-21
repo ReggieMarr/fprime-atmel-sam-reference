@@ -23,17 +23,17 @@ __STATIC_INLINE void FPU_Enable(void)
 }
 #endif
 
-// Pre-Main startup bootstrap
-void __attribute__((weak)) _on_bootstrap(void) {
-    /* Initialize the SAM system */
-    /* Enable ICache (CMSIS-Core API) */
-    SCB_EnableICache();
+// Default Pre-Main startup bootstrap
+/* void __attribute__((weak)) _on_bootstrap(void) { */
+/*     /\* Initialize the SAM system *\/ */
+/*     /\* Enable ICache (CMSIS-Core API) *\/ */
+/*     SCB_EnableICache(); */
 
-    /* Enable DCache (CMSIS-Core API)*/
-    SCB_EnableDCache();
+/*     /\* Enable DCache (CMSIS-Core API)*\/ */
+/*     SCB_EnableDCache(); */
 
-    SYS_Initialize(NULL);
-}
+/*     SYS_Initialize(NULL); */
+/* } */
 
 /**
  * \brief This is the code that gets called on processor reset.

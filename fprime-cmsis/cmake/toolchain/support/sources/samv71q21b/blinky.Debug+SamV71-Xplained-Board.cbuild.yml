@@ -399,7 +399,16 @@ build:
           category: sourceC
         - file: harmony/sam_v71_xult/freertos_hooks.c
           category: sourceC
-        - file: harmony/sam_v71_xult/initialization.c
+    - group: CMSIS_IMPLS
+      add-path:
+        - ${CMSIS_PACK_ROOT}/ARM/CMSIS-Driver/2.10.0
+        - harmony/sam_v71_xult
+      files:
+        - file: cmsis/samv71_blink/impls/Driver_GPIO.c
+          category: sourceC
+        - file: cmsis/samv71_blink/impls/Driver_I2C.c
+          category: sourceC
+        - file: cmsis/samv71_blink/impls/Driver_USART.c
           category: sourceC
     - group: Device_HAL
       add-path:

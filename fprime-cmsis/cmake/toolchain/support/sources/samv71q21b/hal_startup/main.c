@@ -17,6 +17,7 @@ static ARM_DRIVER_I2C *I2Cdrv = &Driver_I2C0;
 extern ARM_DRIVER_USART Driver_USART0;
 static ARM_DRIVER_USART *usartDrv = &Driver_USART0;
 
+
 #define LED0_PIN    PIO_PA23
 #define LED_PIO     PIOA_REGS
 #define LED1_PIN    PIO_PC9
@@ -69,9 +70,9 @@ void _on_bootstrap(void) {
     USART1_Initialize();
 
     /* NOTE could pass a user defined signal event handler here */
-    /* I2Cdrv->Initialize(NULL); */
+    I2Cdrv->Initialize(NULL);
 
-    /* usartDrv->Initialize(NULL); */
+    usartDrv->Initialize(NULL);
 
     /* Nested vector interupt controller
      * Enable the interrupt sources and configure the priorities as configured
