@@ -137,11 +137,14 @@ void blink_led (void *argument) {
 int main(void) {
     static blinkArg_t led0 = {.idx = 0, .tickDelay = 5000};
     static blinkArg_t led1 = {.idx = 1, .tickDelay = 10000};
-    osKernelInitialize();                 // Initialize CMSIS-RTOS
+
+    // Initialize CMSIS-RTOS
+    osKernelInitialize();
     // Create application main thread(s)
     osThreadNew(blink_led, &led0, NULL);
     osThreadNew(blink_led, &led1, NULL);
-    osKernelStart();                      // Start thread execution
+    // Start thread execution
+    osKernelStart();
 
     /* Wait forever here other wise the owned threads will die */
     for (;;) {}
