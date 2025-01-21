@@ -11,7 +11,5 @@ set(SOURCE_FILES
 )
 if(FPRIME_ATMEL)
     list(APPEND SOURCE_FILES "${CMAKE_CURRENT_LIST_DIR}/StreamDriverAtmel.cpp")
-else()
-    list(APPEND SOURCE_FILES "${CMAKE_CURRENT_LIST_DIR}/StreamDriverLinux.cpp")
 endif()
 register_fprime_module()

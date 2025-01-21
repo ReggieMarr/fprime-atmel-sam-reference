@@ -8,7 +8,9 @@
 #define ATMEL_DRV_GpioDriver_HPP
 
 #include <Drv/GpioDriverComponentAc.hpp>
+#include "Driver_GPIO.h"
 #include "sam.h"  // SAMV71 peripheral access
+#include "hal_defs.h"
 
 namespace Atmel {
 
@@ -34,7 +36,7 @@ class GpioDriver : public GpioDriverComponentBase {
     ~GpioDriver();
 
     //! Open GPIO with specified configuration
-    bool open(NATIVE_INT_TYPE gpio, GpioDirection direction);
+    bool open(NATIVE_INT_TYPE gpioPin, GpioDirection direction);
 
   private:
     // ----------------------------------------------------------------------
@@ -54,23 +56,11 @@ class GpioDriver : public GpioDriverComponentBase {
     ) override;
 
     // ----------------------------------------------------------------------
-    // Private helper methods
-    // ----------------------------------------------------------------------
-
-    //! Convert GPIO number to port and pin
-    void convertGpioNumber(
-        NATIVE_INT_TYPE gpio,
-        Pio** port,
-        U32& pin
-    );
-
-    // ----------------------------------------------------------------------
     // Private member variables
     // ----------------------------------------------------------------------
 
-    NATIVE_INT_TYPE this->m_gpio;     //!< GPIO number
-    Pio* m_port;                //!< PIO port
-    U32 m_pin;                  //!< Pin number
+    ARM_DRIVER_GPIO *m_gpio = &DRIVER_GPIO;
+    NATIVE_UINT_TYPE m_pin;                  //!< Pin number
     bool m_initialized;         //!< Initialization status
 };
 

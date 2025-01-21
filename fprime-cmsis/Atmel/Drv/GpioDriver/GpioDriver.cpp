@@ -36,35 +36,20 @@ void GpioDriver::init(const NATIVE_INT_TYPE instance) {
 GpioDriver::~GpioDriver() {
 }
 
-bool GpioDriver::open(NATIVE_INT_TYPE gpio, GpioDirection direction) {
+bool GpioDriver::open(NATIVE_INT_TYPE gpioPin, GpioDirection direction) {
     // Store GPIO number
-    this->m_gpio = gpio;
-
-    // Convert GPIO number to port and pin
-    this->convertGpioNumber(gpio, &this->m_port, this->m_pin);
-
-    if (this->m_port == nullptr) {
-        return false;
-    }
+    this->m_pin = gpioPin;
 
     // Enable peripheral clock for the corresponding PIO controller
-    if (this->m_port == PIOA) {
-        PMC->PMC_PCER0 |= PMC_PCER0_PID10;  // ID_PIOA = 10
-    } else if (this->m_port == PIOB) {
-        PMC->PMC_PCER0 |= PMC_PCER0_PID11;  // ID_PIOB = 11
-    } else if (this->m_port == PIOC) {
-        PMC->PMC_PCER0 |= PMC_PCER0_PID12;  // ID_PIOC = 12
-    } else if (this->m_port == PIOD) {
-        PMC->PMC_PCER0 |= PMC_PCER0_PID16;  // ID_PIOD = 16
-    } else if (this->m_port == PIOE) {
-        PMC->PMC_PCER0 |= PMC_PCER0_PID17;  // ID_PIOE = 17
-    }
+    this->m_gpio->Setup(this->m_pin);
 
     // Configure the pin
     if (direction == IN) {
         // Configure as input
-        this->m_port->PIO_ODR = (1u << this->m_pin);  // Disable output
-        this->m_port->PIO_PER = (1u << this->m_pin);  // Enable PIO control
+        this->m_gpio->PIO_ODR = (1u << this->m_pin);  // Disable output
+        this->m_gpio->PIO_PER = (1u << this->m_pin);  // Enable PIO control
+        this->m_gpio->SetDirection(this->m_pin, ARM_GPIO_INPUT);
+        // Enable PIO control (as opposed to peripheral control)
     } else {
         // Configure as output
         this->m_port->PIO_OER = (1u << this->m_pin);  // Enable output
@@ -110,42 +95,6 @@ Drv::GpioStatus GpioDriver::gpioWrite_handler(
     }
 
     return Drv::GpioStatus::GPIO_OK;
-}
-
-// ----------------------------------------------------------------------
-// Private helper methods
-// ----------------------------------------------------------------------
-
-void GpioDriver::convertGpioNumber(
-    NATIVE_INT_TYPE gpio,
-    Pio** port,
-    U32& pin
-) {
-    // Convert GPIO number to port and pin
-    // Assuming mapping: PA0-PA31 = 0-31, PB0-PB31 = 32-63, etc.
-    NATIVE_INT_TYPE portNum = gpio / 32;
-    pin = gpio % 32;
-
-    switch (portNum) {
-        case 0:
-            *port = PIOA;
-            break;
-        case 1:
-            *port = PIOB;
-            break;
-        case 2:
-            *port = PIOC;
-            break;
-        case 3:
-            *port = PIOD;
-            break;
-        case 4:
-            *port = PIOE;
-            break;
-        default:
-            *port = nullptr;
-            break;
-    }
 }
 
 }  // namespace Atmel

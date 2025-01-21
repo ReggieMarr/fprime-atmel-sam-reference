@@ -398,6 +398,13 @@ EOF
       "mplab-cfg")
         mplab_exec "mplab_ide"
       ;;
+      "gdb-server")
+        bin_path="./fprime-cmsis/cmake/toolchain/support/sources/samv71q21b/out/blinky/SamV71-Xplained-Board/Debug/blinky.elf"
+        serve_cmd="pyocd gdbserver --elf $bin_path -t atsamv71q21b"
+
+        # run_docker_compose $cmd --service="sam" -- $flags
+        exec_cmd "$serve_cmd"
+      ;;
       "base")
         echo "Not yet supported"
         exit 1

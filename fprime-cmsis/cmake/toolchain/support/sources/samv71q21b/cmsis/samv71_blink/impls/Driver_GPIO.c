@@ -16,6 +16,7 @@
  * limitations under the License.
  */
 #include "Driver_GPIO.h"
+#include "hal_defs.h"
 #include "peripheral/pio/plib_pio.h"
 
 // Pin mapping
@@ -25,12 +26,19 @@
 // Callback event handler
 static ARM_GPIO_SignalEvent_t gpio_cb_event = NULL;
 
-// Setup GPIO Interface
-static int32_t GPIO_Setup(ARM_GPIO_Pin_t pin, ARM_GPIO_SignalEvent_t cb_event)
+/* typedef struct impl_s { */
+/*     SYS_MODULE_OBJ sysObj; */
+/*     DRV_HANDLE handle; */
+/*     ARM_I2C_SignalEvent_t cb_event; */
+/*     DRV_I2C_TRANSFER_SETUP transfer_setup; // Transfer setup configuration */
+/* } impl_t; */
+/* static impl_t ME; */
+
+static int32_t Register_Ensure_Write(ARM_GPIO_Pin_t pin, ARM_GPIO_SignalEvent_t cb_event)
 {
     int32_t result = ARM_DRIVER_OK;
-    /* NOTE in here we should check whether the PIO_INITIALIZE has been set */
 
+    /* NOTE in here we should check whether the PIO_INITIALIZE has been set */
     if (PIN_IS_AVAILABLE(pin)) {
         // Store callback
         gpio_cb_event = cb_event;
@@ -41,6 +49,20 @@ static int32_t GPIO_Setup(ARM_GPIO_Pin_t pin, ARM_GPIO_SignalEvent_t cb_event)
         result = ARM_GPIO_ERROR_PIN;
     }
     return result;
+}
+
+// Setup GPIO Interface
+static int32_t GPIO_Setup(ARM_GPIO_Pin_t pin, ARM_GPIO_SignalEvent_t cb_event)
+{
+    CHECK(PIN_IS_AVAILABLE(pin), return ARM_GPIO_ERROR_PIN)
+
+    /* NOTE The PIO_Initialize() should have been called during system initialization */
+    /* No need to call it here as it would reset all pin configurations, however we */
+    /* should check the status */
+
+    gpio_cb_event = cb_event;
+
+    return ARM_DRIVER_OK;
 }
 
 // Set GPIO Direction
@@ -71,22 +93,23 @@ static int32_t GPIO_SetDirection(ARM_GPIO_Pin_t pin, ARM_GPIO_DIRECTION directio
 // Set GPIO Output Mode
 static int32_t GPIO_SetOutputMode(ARM_GPIO_Pin_t pin, ARM_GPIO_OUTPUT_MODE mode)
 {
-    int32_t result = ARM_DRIVER_OK;
+    CHECK(PIN_IS_AVAILABLE(pin), return ARM_GPIO_ERROR_PIN)
+    CHECK(mode == ARM_GPIO_OPEN_DRAIN || mode == ARM_GPIO_PUSH_PULL, return ARM_DRIVER_ERROR_PARAMETER)
 
-    if (PIN_IS_AVAILABLE(pin)) {
-        // Note: The existing PIO library doesn't provide direct control over
-        // push-pull vs open-drain mode. You might need to modify the PIO library
-        // or access registers directly for this functionality.
-        result = ARM_DRIVER_ERROR_UNSUPPORTED;
-    } else {
-        result = ARM_GPIO_ERROR_PIN;
-    }
-    return result;
+    ((pio_registers_t*)pin)->PIO_MDER = (1 < pin);
+
+    return ARM_DRIVER_ERROR_UNSUPPORTED;
 }
 
 // Set GPIO Pull Resistor
 static int32_t GPIO_SetPullResistor(ARM_GPIO_Pin_t pin, ARM_GPIO_PULL_RESISTOR resistor)
 {
+    CHECK(PIN_IS_AVAILABLE(pin), return ARM_GPIO_ERROR_PIN)
+
+    ((pio_registers_t*)pin)->PIO_MDER = (1 < pin);
+
+    return ARM_DRIVER_ERROR_UNSUPPORTED;
+
     int32_t result = ARM_DRIVER_OK;
 
     if (PIN_IS_AVAILABLE(pin)) {
@@ -136,7 +159,7 @@ static uint32_t GPIO_GetInput(ARM_GPIO_Pin_t pin)
 }
 
 // GPIO Driver access structure
-ARM_DRIVER_GPIO Driver_GPIO0 = {
+ARM_DRIVER_GPIO Driver_GPIO = {
     GPIO_Setup,
     GPIO_SetDirection,
     GPIO_SetOutputMode,

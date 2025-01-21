@@ -1,5 +1,6 @@
 #ifndef _DEVICE_COMMON_H
 #define _DEVICE_COMMON_H
+#include "Driver_GPIO.h"
 #include "samv71q21b.h"
 
 /* Initialize segments */
@@ -23,6 +24,8 @@ extern void __attribute__((weak,long_call)) _on_bootstrap(void);
 extern void Reset_Handler(void);
 
 extern void Dummy_Handler(void);
+
+extern ARM_DRIVER_GPIO DRIVER_GPIO;
 
 /** \cond DOXYGEN_SHOULD_SKIP_THIS */
 int main(void);
