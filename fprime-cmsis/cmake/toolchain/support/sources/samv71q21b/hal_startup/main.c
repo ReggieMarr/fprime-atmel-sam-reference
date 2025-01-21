@@ -86,12 +86,11 @@ void _on_bootstrap(void) {
 
 typedef struct {
     size_t idx;
-    size_t cycleNum;
     size_t tickDelay;
 } blinkArg_t;
 
 void blink_led (void *argument) {
-    blinkArg_t args = *(blinkArg_t *) argument;
+    blinkArg_t *args = (blinkArg_t *) argument;
     volatile pio_registers_t *ledReg = NULL;
     volatile uint32_t ledPin;
     size_t dfltTickDelay = 50000;
@@ -112,68 +111,35 @@ void blink_led (void *argument) {
 
     osDelay(dfltTickDelay);
 
-    if (args.idx == 0) {
+    if (args->idx == 0) {
         ledReg = LED_PIO;
         ledPin = LED0_PIN;
     }
-    else if (args.idx == 1) {
+    else if (args->idx == 1) {
         ledReg = LED1_PIO;
         ledPin = LED1_PIN;
     }
-    else if (args.idx < 0) {
+    else if (args->idx < 0) {
         LED_PIO->PIO_CODR = LED0_PIN;
     }
-    else if (args.idx > 1) {
-        LED1_PIO->PIO_CODR = LED1_PIN;
-        osDelay(dfltTickDelay/2);
-        for (uint32_t i = 0; i < args.cycleNum; i ++) {
-            LED1_PIO->PIO_SODR = LED1_PIN;
-            osDelay(dfltTickDelay/2);
-            LED1_PIO->PIO_CODR = LED1_PIN;
-            osDelay(dfltTickDelay/2);
-        }
-    }
-    else {
-        while(1) {
-            // Set output (LED OFF)
-            LED_PIO->PIO_CODR = LED0_PIN;
-            LED1_PIO->PIO_CODR = LED1_PIN;
-            osDelay(dfltTickDelay);
-            // Clear output (LED ON)
-            LED_PIO->PIO_SODR = LED0_PIN;
-            LED1_PIO->PIO_SODR = LED1_PIN;
-            osDelay(dfltTickDelay);
-        }
-    }
 
-    /* while(ledReg != NULL) { */
-    /*     // Set output (LED OFF) */
-    /*     ledReg->PIO_SODR = ledPin; */
-    /*     osDelay(args.tickDelay); */
-    /*     // Clear output (LED ON) */
-    /*     ledReg->PIO_CODR = ledPin; */
-    /*     osDelay(args.tickDelay); */
-    /* } */
+    while(ledReg != NULL) {
+        // Set output (LED OFF)
+        ledReg->PIO_SODR = ledPin;
+        osDelay(args->tickDelay);
+        // Clear output (LED ON)
+        ledReg->PIO_CODR = ledPin;
+        osDelay(args->tickDelay);
+    }
 }
 
-/* void blink_led_1 (void *argument) { */
-/*     while(1) { */
-/*         LED1_PIO->PIO_SODR = LED1_PIN; */
-/*         osDelay(5000); */
-/*         // Clear output (LED ON) */
-/*         LED1_PIO->PIO_CODR = LED1_PIN; */
-/*         osDelay(5000); */
-/*     } */
-/* } */
-
 int main(void) {
-    /* blinkArg_t led0 = {.idx = 0, .tickDelay = 5000}; */
-    static blinkArg_t led1 = {.idx = 1, .cycleNum = 5, .tickDelay = 10000,};
+    static blinkArg_t led0 = {.idx = 0, .tickDelay = 5000};
+    static blinkArg_t led1 = {.idx = 1, .tickDelay = 10000};
     osKernelInitialize();                 // Initialize CMSIS-RTOS
     // Create application main thread(s)
-    /* osThreadNew(blink_led, &led0, NULL); */
-    osThreadNew(blink_led, (blinkArg_t *)&led1, NULL);
-    /* osThreadNew(blink_led_1, NULL, NULL); */
+    osThreadNew(blink_led, &led0, NULL);
+    osThreadNew(blink_led, &led1, NULL);
     osKernelStart();                      // Start thread execution
 
     /* Wait forever here other wise the owned threads will die */
