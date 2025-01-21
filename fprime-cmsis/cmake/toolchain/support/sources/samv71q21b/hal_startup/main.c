@@ -1,5 +1,6 @@
 #include "Driver_GPIO.h"
 #include "Driver_USART.h"
+#include "os_tick.h"
 #include "sam.h"
 #include "hal_defs.h"
 #include "cmsis_os2.h"
@@ -45,7 +46,6 @@ static void setupLeds(void)
     LED1_PIO->PIO_PUDR = LED1_PIN;
     // Set high (LED off)
     LED1_PIO->PIO_SODR = LED1_PIN;
-    LED1_PIO->PIO_SODR = LED1_PIN;
 }
 
 // Pre-Main startup bootstrap
@@ -80,33 +80,104 @@ void _on_bootstrap(void) {
 
     /* NOTE should call GPIO_Setup for relevant io's here */
     setupLeds();
+
+    SystemCoreClockUpdate();
 }
 
-void delay_ms(uint32_t ms) {
-    for (uint32_t i = 0; i < (ms * 1000); ++i) {
-        __NOP(); // Simple delay loop
+typedef struct {
+    size_t idx;
+    size_t cycleNum;
+    size_t tickDelay;
+} blinkArg_t;
+
+void blink_led (void *argument) {
+    blinkArg_t args = *(blinkArg_t *) argument;
+    volatile pio_registers_t *ledReg = NULL;
+    volatile uint32_t ledPin;
+    size_t dfltTickDelay = 50000;
+    // Off
+    LED1_PIO->PIO_CODR = LED1_PIN;
+    LED_PIO->PIO_CODR = LED0_PIN;
+    osDelay(dfltTickDelay/2);
+    LED1_PIO->PIO_SODR = LED1_PIN;
+    LED_PIO->PIO_SODR = LED0_PIN;
+
+    LED1_PIO->PIO_CODR = LED1_PIN;
+    /* LED_PIO->PIO_CODR = LED0_PIN; */
+    osDelay(dfltTickDelay);
+
+    // Off
+    LED1_PIO->PIO_SODR = LED1_PIN;
+    /* LED_PIO->PIO_SODR = LED0_PIN; */
+
+    osDelay(dfltTickDelay);
+
+    if (args.idx == 0) {
+        ledReg = LED_PIO;
+        ledPin = LED0_PIN;
     }
-}
-
-void app_main (void *argument) {
-    while(1) {
-        // Set output (LED OFF)
-        LED1_PIO->PIO_SODR = LED1_PIN;
-        delay_ms(500);
-        // Clear output (LED ON)
+    else if (args.idx == 1) {
+        ledReg = LED1_PIO;
+        ledPin = LED1_PIN;
+    }
+    else if (args.idx < 0) {
+        LED_PIO->PIO_CODR = LED0_PIN;
+    }
+    else if (args.idx > 1) {
         LED1_PIO->PIO_CODR = LED1_PIN;
-        delay_ms(500);
+        osDelay(dfltTickDelay/2);
+        for (uint32_t i = 0; i < args.cycleNum; i ++) {
+            LED1_PIO->PIO_SODR = LED1_PIN;
+            osDelay(dfltTickDelay/2);
+            LED1_PIO->PIO_CODR = LED1_PIN;
+            osDelay(dfltTickDelay/2);
+        }
     }
+    else {
+        while(1) {
+            // Set output (LED OFF)
+            LED_PIO->PIO_CODR = LED0_PIN;
+            LED1_PIO->PIO_CODR = LED1_PIN;
+            osDelay(dfltTickDelay);
+            // Clear output (LED ON)
+            LED_PIO->PIO_SODR = LED0_PIN;
+            LED1_PIO->PIO_SODR = LED1_PIN;
+            osDelay(dfltTickDelay);
+        }
+    }
+
+    /* while(ledReg != NULL) { */
+    /*     // Set output (LED OFF) */
+    /*     ledReg->PIO_SODR = ledPin; */
+    /*     osDelay(args.tickDelay); */
+    /*     // Clear output (LED ON) */
+    /*     ledReg->PIO_CODR = ledPin; */
+    /*     osDelay(args.tickDelay); */
+    /* } */
 }
+
+/* void blink_led_1 (void *argument) { */
+/*     while(1) { */
+/*         LED1_PIO->PIO_SODR = LED1_PIN; */
+/*         osDelay(5000); */
+/*         // Clear output (LED ON) */
+/*         LED1_PIO->PIO_CODR = LED1_PIN; */
+/*         osDelay(5000); */
+/*     } */
+/* } */
 
 int main(void) {
-    // System Initialization
-    SystemCoreClockUpdate();
-    app_main(NULL);
+    /* blinkArg_t led0 = {.idx = 0, .tickDelay = 5000}; */
+    static blinkArg_t led1 = {.idx = 1, .cycleNum = 5, .tickDelay = 10000,};
+    osKernelInitialize();                 // Initialize CMSIS-RTOS
+    // Create application main thread(s)
+    /* osThreadNew(blink_led, &led0, NULL); */
+    osThreadNew(blink_led, (blinkArg_t *)&led1, NULL);
+    /* osThreadNew(blink_led_1, NULL, NULL); */
+    osKernelStart();                      // Start thread execution
 
-    /* osKernelInitialize();                 // Initialize CMSIS-RTOS */
-    /* osThreadNew(app_main, NULL, NULL);    // Create application main thread */
-    /* osKernelStart();                      // Start thread execution */
+    /* Wait forever here other wise the owned threads will die */
+    for (;;) {}
 
     return 0;
 }
