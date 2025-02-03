@@ -14,6 +14,13 @@
 
 namespace Atmel {
 
+typedef struct {
+    ARM_GPIO_DIRECTION direction;
+    ARM_GPIO_PULL_RESISTOR embeddedResistorMode;
+    ARM_GPIO_OUTPUT_MODE outputMode;
+    ARM_GPIO_EVENT_TRIGGER eventTriggerMode;
+} pioConfig_t;
+
 class GpioDriver : public GpioDriverComponentBase {
   public:
     //! Configure GPIO direction
@@ -60,7 +67,6 @@ class GpioDriver : public GpioDriverComponentBase {
     // ----------------------------------------------------------------------
 
     ARM_DRIVER_GPIO *m_gpio = &DRIVER_GPIO;
-    NATIVE_UINT_TYPE m_pin;                  //!< Pin number
     bool m_initialized;         //!< Initialization status
 };
 

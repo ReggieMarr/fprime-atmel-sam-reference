@@ -46,14 +46,16 @@ bool GpioDriver::open(NATIVE_INT_TYPE gpioPin, GpioDirection direction) {
     // Configure the pin
     if (direction == IN) {
         // Configure as input
-        this->m_gpio->PIO_ODR = (1u << this->m_pin);  // Disable output
-        this->m_gpio->PIO_PER = (1u << this->m_pin);  // Enable PIO control
-        this->m_gpio->SetDirection(this->m_pin, ARM_GPIO_INPUT);
+        // this->m_gpio->PIO_ODR = (1u << this->m_pin);  // Disable output
+        // this->m_gpio->PIO_PER = (1u << this->m_pin);  // Enable PIO control
+        this->m_gpio->SetDirection(this->m_pin, ARM_GPIO_DIRECTION::ARM_GPIO_INPUT);
+        // this->m_gpio->SetDirection(this->m_pin, ARM_GPIO_INPUT);
         // Enable PIO control (as opposed to peripheral control)
     } else {
         // Configure as output
-        this->m_port->PIO_OER = (1u << this->m_pin);  // Enable output
-        this->m_port->PIO_PER = (1u << this->m_pin);  // Enable PIO control
+        // this->m_port->PIO_OER = (1u << this->m_pin);  // Enable output
+        // this->m_port->PIO_PER = (1u << this->m_pin);  // Enable PIO control
+        this->m_gpio->SetDirection(this->m_pin, ARM_GPIO_DIRECTION::ARM_GPIO_OUTPUT);
     }
 
     this->m_initialized = true;
