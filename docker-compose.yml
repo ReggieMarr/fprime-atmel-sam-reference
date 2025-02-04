@@ -9,7 +9,7 @@ services:
       - FORCE_COLOR=1
       - CMAKE_COLOR_DIAGNOSTICS=ON
       - NINJA_COLOR=1
-    tty: true
+    container_name: fprime-sam
     network_mode: host
     volumes:
       - ./:$SAM_WDIR

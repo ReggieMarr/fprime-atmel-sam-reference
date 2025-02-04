@@ -1,7 +1,7 @@
 #!/bin/bash
-source .env
 export SCRIPT_DIR="$(cd "$(dirname "$0")"; pwd -P)"
 cd "$SCRIPT_DIR"
+source .env
 set -e
 set -o pipefail
 # set -o nounset
@@ -45,6 +45,8 @@ show_help() {
 Usage: $(basename "$0") [OPTIONS] COMMAND
 Options:
   --clean              Clean build
+  --daemon             Run as daemon
+  --standalone         Run the command without starting any implied dependencies
   --help               Show this help message
 Commands:
   mbd-to-xml           Convert MBD to XML
@@ -58,70 +60,107 @@ EOF
 
 # Default values
 DEFAULT_SERVICE="sam"
-DEFAULT_FLAGS="-it --rm"
+DEFAULT_FLAGS="-it"
+BASE_FLAGS="--rm --user $(id -u):$(id -g) --remove-orphans"
 CLEAN=0
+STANDALONE=0
+DAEMON=0
 
 # Process flags
 for arg in "$@"; do
     case $arg in
+        --daemon) DAEMON=1 ;;
         --clean) CLEAN=1 ;;
+        --standalone) STANDALONE=1 ;;
         --help) show_help; exit 0 ;;
     esac
 done
 
 exec_cmd() {
-    cmd="$1"
-    echo "$cmd"
+    local cmd="${1}"
+    echo "Executing: $cmd"
     eval "$cmd"
     exit_code=$?
-    if [ $exit_code -ne 0 ]; then
+    if [ $exit_code -eq 1 ] || [ $exit_code -eq 2 ]; then
         echo "Failed cmd with error $exit_code"
-        exit $exit_code
+        exit $exit_code;
     fi
 }
 
-# A DWIM function, interprets the arguments passed to it contextually
 run_docker_compose() {
-    # Get list of services from docker-compose.yml and clean up the output
-    SERVICES=$(docker compose config --services | sed 's/^[0-9]*://')
+    local service="$1"
+    local cmd="$2"
+    # Always kill the container after executing the command
+    # by default run the command with an interactive tty
+    local flags="$BASE_FLAGS ${3:$DEFAULT_FLAGS}"
 
-    # Default values
-    service="$DEFAULT_SERVICE"
-    command=""
-    flags="$DEFAULT_FLAGS"
+    if [ "${DAEMON}" -eq "1" ]; then
+        flags="${flags//-it/}"   # Remove standalone "-it"
 
-    while [[ $# -gt 0 ]]; do
-        case $1 in
-            --service=*)
-                service="${1#*=}"
-                shift
-                ;;
-            --)
-                shift
-                # Everything after -- becomes and overwrites the flags
-                flags=$*
-                break
-                ;;
-            *)
-                if [ -z "$command" ]; then
-                    command="$1"
-                else
-                    command="$command $1"
-                fi
-                shift
-                ;;
-        esac
-    done
-
-    # Validate service
-    if ! echo "$SERVICES" | grep -q "^${service}$"; then
-        echo "Invalid service: $service, not found in $SERVICES"
-        return 1
+        flags+=" --detach"
     fi
 
-    # Construct and execute the command
-    docker_cmd="docker compose run --name ${service}-runner $flags $service bash -c \"$command\""
-    exec_cmd "$docker_cmd"
+    [ "$STANDALONE" -eq 1 ] && flags="--no-deps"
+
+    exec_cmd "docker compose run $flags $service $cmd"
+}
+
+try_docker_exec() {
+    local service="$1"
+    local cmd="$2"
+    local container_name="fprime-${service}"  # assuming your container naming convention
+    local flags="$3"
+
+    # Check if container is running
+    if docker container inspect "$container_name" >/dev/null 2>&1; then
+        echo "Container $container_name is running, using docker exec..."
+        exec_cmd "docker exec $flags $container_name $cmd"
+    else
+        echo "Container $container_name is not running, using docker compose run..."
+        run_docker_compose "$service" "$cmd" "$flags"
+    fi
+}
+
+try_stop_container() {
+  local container_name="$1"
+  local timeout=${2:-10}  # default 10 seconds timeout
+
+  if docker container inspect "$container_name" >/dev/null 2>&1; then
+      echo "Stopping container $container_name (timeout: ${timeout}s)..."
+      if ! docker container stop -t "$timeout" "$container_name"; then
+          echo "Failed to stop container $container_name gracefully"
+          return 1
+      fi
+      echo "Container $container_name stopped successfully"
+  else
+      echo "Container $container_name is not running"
+  fi
+}
+
+build_docker() {
+  if ! git diff-index --quiet HEAD --; then
+      read -p "You have unstaged changes. Continue? (y/n) " -n 1 -r
+      echo
+      [[ $REPLY =~ ^[Yy]$ ]] || { echo "Build cancelled."; exit 1; }
+  fi
+
+  # Fetch from remote to ensure we have latest refs
+  git fetch -q origin
+
+  # Get current commit hash
+  CURRENT_COMMIT=$(git rev-parse HEAD)
+
+  # Check if current commit exists in any remote branch
+  if ! git branch -r --contains "$CURRENT_COMMIT" | grep -q "origin/"; then
+      read -p "Current commit not found in remote repository. Continue? (y/n) " -n 1 -r
+      echo
+      [[ $REPLY =~ ^[Yy]$ ]] || { echo "Build cancelled."; exit 1; }
+  fi
+
+  CMD="docker compose --progress=plain --env-file=${SCRIPT_DIR}/.env build fsw"
+  [ "$CLEAN" -eq 1 ] && CMD+=" --no-cache"
+  CMD+=" --build-arg GIT_COMMIT=$(git rev-parse HEAD) --build-arg GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)"
+  exec_cmd "$CMD"
 }
 
 wine_exec() {
@@ -275,14 +314,13 @@ case $1 in
     fi
 EOF
       flags="-w $SAM_WDIR $DEFAULT_FLAGS"
-      run_docker_compose $cmd --service="sam" -- $flags
+      try_docker_exec "sam" "$cmd" "$flags"
     else
       fprime_root="${2:-$SCRIPT_DIR/deps/fprime}"  # Get the path provided or use current directory
       fprime_root="${fprime_root/$SCRIPT_DIR/$SAM_WDIR}"
       echo "Formatting from $fprime_root"
       cmd="git diff --name-only --relative | fprime-util format --no-backup --stdin"
-      flags="-w $fprime_root $DEFAULT_FLAGS"
-      run_docker_compose $cmd --service="sam" -- $flags
+      try_docker_exec "sam" "bash -c \"$cmd\""
     fi
     ;;
 
@@ -329,29 +367,7 @@ EOF
         ateml_exec "build"
       ;;
       "docker")
-        if ! git diff-index --quiet HEAD --; then
-            read -p "You have unstaged changes. Continue? (y/n) " -n 1 -r
-            echo
-            [[ $REPLY =~ ^[Yy]$ ]] || { echo "Build cancelled."; exit 1; }
-        fi
-
-        # Fetch from remote to ensure we have latest refs
-        git fetch -q origin
-
-        # Get current commit hash
-        CURRENT_COMMIT=$(git rev-parse HEAD)
-
-        # Check if current commit exists in any remote branch
-        if ! git branch -r --contains "$CURRENT_COMMIT" | grep -q "origin/"; then
-            read -p "Current commit not found in remote repository. Continue? (y/n) " -n 1 -r
-            echo
-            [[ $REPLY =~ ^[Yy]$ ]] || { echo "Build cancelled."; exit 1; }
-        fi
-
-        CMD="docker compose --progress=plain --env-file=${SCRIPT_DIR}/.env build sam"
-        [ "$CLEAN" -eq 1 ] && CMD+=" --no-cache"
-        CMD+=" --build-arg GIT_COMMIT=$(git rev-parse HEAD) --build-arg GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)"
-        exec_cmd "$CMD"
+        build_docker
       ;;
       "test")
         echo "Not yet supported"
@@ -431,7 +447,7 @@ EOF
               # Fall through, all these case are the same.
           ;&
             "sam")
-            run_docker_compose "bash" --service=$INSPECT_TARGET
+            try_docker_exec $INSPECT_TARGET "bash" "-it"
           ;;
           *)
           echo "Invalid inspect target: ${INSPECT_TARGET}"
