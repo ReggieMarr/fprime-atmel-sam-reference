@@ -19,24 +19,21 @@
 #include "Driver_I2C.h"
 #include <stdint.h>
 // Harmony includes
-#include "driver/i2c/drv_i2c.h"
-#include "system/system_module.h"
 #include "configuration.h"
 #include "definitions.h"
 #include "device.h"
+#include "driver/i2c/drv_i2c.h"
+#include "system/system_module.h"
 
 #include "hal_defs.h"
 
-#define ARM_I2C_DRV_VERSION    ARM_DRIVER_VERSION_MAJOR_MINOR(1, 0) /* driver version */
+#define ARM_I2C_DRV_VERSION ARM_DRIVER_VERSION_MAJOR_MINOR(1, 0) /* driver version */
 /* Driver Version */
-static const ARM_DRIVER_VERSION DriverVersion = {
-    ARM_I2C_API_VERSION,
-    ARM_I2C_DRV_VERSION
-};
+static const ARM_DRIVER_VERSION DriverVersion = {ARM_I2C_API_VERSION, ARM_I2C_DRV_VERSION};
 
 /* Driver Capabilities */
 static const ARM_I2C_CAPABILITIES DriverCapabilities = {
-    0  /* supports 10-bit addressing */
+    0 /* supports 10-bit addressing */
 };
 
 /* Instance Impl private data */
@@ -50,16 +47,14 @@ typedef struct impl_s {
     SYS_MODULE_OBJ sysObj;
     DRV_HANDLE handle;
     ARM_I2C_SignalEvent_t cb_event;
-    DRV_I2C_TRANSFER_SETUP transfer_setup; // Transfer setup configuration
+    DRV_I2C_TRANSFER_SETUP transfer_setup;  // Transfer setup configuration
 } impl_t;
 
 static impl_t ME;
 
 // Default signal event handler
-void __attribute__((weak)) ARM_I2C_SignalEvent(uint32_t event)
-{
-    switch(event)
-    {
+void __attribute__((weak)) ARM_I2C_SignalEvent(uint32_t event) {
+    switch (event) {
         case DRV_I2C_TRANSFER_EVENT_PENDING:
             // Signal ARM_I2C_EVENT_TRANSFER_INCOMPLETE
             break;
@@ -75,7 +70,6 @@ void __attribute__((weak)) ARM_I2C_SignalEvent(uint32_t event)
             // Signal appropriate error event
             // (ARM_I2C_EVENT_ADDRESS_NACK, ARM_I2C_EVENT_BUS_ERROR, etc.)
             break;
-
     }
 }
 
@@ -97,7 +91,6 @@ const DRV_I2C_PLIB_INTERFACE drvI2C0PLibAPI = {
     /* I2C PLib Transfer Write Add function */
     .write = (DRV_I2C_PLIB_WRITE)TWIHS0_Write,
 
-
     /* I2C PLib Transfer Write Read Add function */
     .writeRead = (DRV_I2C_PLIB_WRITE_READ)TWIHS0_WriteRead,
 
@@ -114,10 +107,8 @@ const DRV_I2C_PLIB_INTERFACE drvI2C0PLibAPI = {
     .callbackRegister = (DRV_I2C_PLIB_CALLBACK_REGISTER)TWIHS0_CallbackRegister,
 };
 
-
 /* I2C Driver Initialization Data */
-const DRV_I2C_INIT drvI2C0InitData =
-{
+const DRV_I2C_INIT drvI2C0InitData = {
     /* I2C PLib API */
     .i2cPlib = &drvI2C0PLibAPI,
 
@@ -135,19 +126,16 @@ const DRV_I2C_INIT drvI2C0InitData =
 //  Functions
 //
 
-static ARM_DRIVER_VERSION ARM_I2C_GetVersion(void)
-{
-  return DriverVersion;
+static ARM_DRIVER_VERSION ARM_I2C_GetVersion(void) {
+    return DriverVersion;
 }
 
-static ARM_I2C_CAPABILITIES ARM_I2C_GetCapabilities(void)
-{
-  return DriverCapabilities;
+static ARM_I2C_CAPABILITIES ARM_I2C_GetCapabilities(void) {
+    return DriverCapabilities;
 }
 
-static int32_t ARM_I2C_Initialize(ARM_I2C_SignalEvent_t cb_event)
-{
-    ME.sysObj = DRV_I2C_Initialize(DRV_I2C_INDEX_0, (SYS_MODULE_INIT *)&drvI2C0InitData);
+static int32_t ARM_I2C_Initialize(ARM_I2C_SignalEvent_t cb_event) {
+    ME.sysObj = DRV_I2C_Initialize(DRV_I2C_INDEX_0, (SYS_MODULE_INIT*)&drvI2C0InitData);
 
     CHECK(ME.sysObj != SYS_MODULE_OBJ_INVALID, return ARM_DRIVER_ERROR);
 
@@ -159,80 +147,62 @@ static int32_t ARM_I2C_Initialize(ARM_I2C_SignalEvent_t cb_event)
     return ARM_DRIVER_OK;
 }
 
-static int32_t ARM_I2C_Uninitialize(void)
-{
+static int32_t ARM_I2C_Uninitialize(void) {
     DRV_I2C_Close(ME.handle);
     ME.cb_event = NULL;
 
     return ARM_DRIVER_OK;
 }
 
-static int32_t ARM_I2C_PowerControl(ARM_POWER_STATE state)
-{
+static int32_t ARM_I2C_PowerControl(ARM_POWER_STATE state) {
     return ARM_DRIVER_OK;
-    switch (state)
-    {
-    case ARM_POWER_OFF:
-        ARM_I2C_Uninitialize();
-        break;
-    case ARM_POWER_LOW:
-        return ARM_DRIVER_ERROR_UNSUPPORTED;
-    case ARM_POWER_FULL:
-        CHECK(ARM_I2C_Initialize(ARM_I2C_SignalEvent) == ARM_DRIVER_OK, return ret);
-        break;
-    default:
-        return ARM_DRIVER_ERROR_UNSUPPORTED;
+    switch (state) {
+        case ARM_POWER_OFF:
+            ARM_I2C_Uninitialize();
+            break;
+        case ARM_POWER_LOW:
+            return ARM_DRIVER_ERROR_UNSUPPORTED;
+        case ARM_POWER_FULL:
+            CHECK(ARM_I2C_Initialize(ARM_I2C_SignalEvent) == ARM_DRIVER_OK, return ret);
+            break;
+        default:
+            return ARM_DRIVER_ERROR_UNSUPPORTED;
     }
 
     return ARM_DRIVER_OK;
 }
 
-static int32_t ARM_I2C_MasterTransmit(uint32_t addr, const uint8_t *data, uint32_t num, bool xfer_pending)
-{
+static int32_t ARM_I2C_MasterTransmit(uint32_t addr, const uint8_t* data, uint32_t num, bool xfer_pending) {
     bool success;
     // Convert 7-bit/10-bit address format
     addr = (uint16_t)(addr & ~ARM_I2C_ADDRESS_10BIT);
 
     // Call Harmony driver write function
-    success = DRV_I2C_WriteTransfer(
-        ME.handle,
-        addr,
-        (void*)data,
-        (size_t)num
-    );
+    success = DRV_I2C_WriteTransfer(ME.handle, addr, (void*)data, (size_t)num);
 
     return (success) ? ARM_DRIVER_OK : ARM_DRIVER_ERROR;
 }
 
-static int32_t ARM_I2C_MasterReceive(uint32_t addr, uint8_t *data, uint32_t num, bool xfer_pending)
-{
+static int32_t ARM_I2C_MasterReceive(uint32_t addr, uint8_t* data, uint32_t num, bool xfer_pending) {
     bool success;
     // Convert 7-bit/10-bit address format
     addr = (uint16_t)(addr & ~ARM_I2C_ADDRESS_10BIT);
 
     // Call Harmony driver read function
-    success = DRV_I2C_ReadTransfer(
-        ME.handle,
-        addr,
-        (void*)data,
-        (size_t)num
-    );
+    success = DRV_I2C_ReadTransfer(ME.handle, addr, (void*)data, (size_t)num);
 
     return (success) ? ARM_DRIVER_OK : ARM_DRIVER_ERROR;
 }
 
-static int32_t ARM_I2C_SlaveTransmit(const uint8_t *data, uint32_t num)
-{
+static int32_t ARM_I2C_SlaveTransmit(const uint8_t* data, uint32_t num) {
     return ARM_DRIVER_ERROR_UNSUPPORTED;
 }
 
-static int32_t ARM_I2C_SlaveReceive(uint8_t *data, uint32_t num)
-{
+static int32_t ARM_I2C_SlaveReceive(uint8_t* data, uint32_t num) {
     return ARM_DRIVER_ERROR_UNSUPPORTED;
 }
 
-static int32_t ARM_I2C_GetDataCount(void)
-{
+static int32_t ARM_I2C_GetDataCount(void) {
     // You'll need to maintain a counter for transferred data
     // This could be implemented by tracking the transfer status and bytes transferred
     // through the Harmony driver callbacks
@@ -241,41 +211,37 @@ static int32_t ARM_I2C_GetDataCount(void)
     return transferredBytes;
 }
 
-static int32_t ARM_I2C_Control(uint32_t control, uint32_t arg)
-{
-    DRV_I2C_TRANSFER_SETUP setup = { 0 };
+static int32_t ARM_I2C_Control(uint32_t control, uint32_t arg) {
+    DRV_I2C_TRANSFER_SETUP setup = {0};
 
     if (ME.handle == DRV_HANDLE_INVALID) {
         return ARM_DRIVER_ERROR;
     }
 
-    switch (control)
-    {
-    case ARM_I2C_BUS_SPEED:
-        {
+    switch (control) {
+        case ARM_I2C_BUS_SPEED: {
             // Configure transfer setup
-            setup.clockSpeed = 0; // Initialize to 0
+            setup.clockSpeed = 0;  // Initialize to 0
 
-            switch (arg)
-            {
-            case ARM_I2C_BUS_SPEED_STANDARD:
-                setup.clockSpeed = 100000; // 100 kHz
-                break;
+            switch (arg) {
+                case ARM_I2C_BUS_SPEED_STANDARD:
+                    setup.clockSpeed = 100000;  // 100 kHz
+                    break;
 
-            case ARM_I2C_BUS_SPEED_FAST:
-                setup.clockSpeed = 400000; // 400 kHz
-                break;
+                case ARM_I2C_BUS_SPEED_FAST:
+                    setup.clockSpeed = 400000;  // 400 kHz
+                    break;
 
-            case ARM_I2C_BUS_SPEED_FAST_PLUS:
-                setup.clockSpeed = 1000000; // 1 MHz
-                break;
+                case ARM_I2C_BUS_SPEED_FAST_PLUS:
+                    setup.clockSpeed = 1000000;  // 1 MHz
+                    break;
 
-            case ARM_I2C_BUS_SPEED_HIGH:
-                setup.clockSpeed = 3400000; // 3.4 MHz
-                break;
+                case ARM_I2C_BUS_SPEED_HIGH:
+                    setup.clockSpeed = 3400000;  // 3.4 MHz
+                    break;
 
-            default:
-                return ARM_DRIVER_ERROR_UNSUPPORTED;
+                default:
+                    return ARM_DRIVER_ERROR_UNSUPPORTED;
             }
 
             // Store the transfer setup
@@ -289,16 +255,15 @@ static int32_t ARM_I2C_Control(uint32_t control, uint32_t arg)
             return ARM_DRIVER_OK;
         }
 
-    case ARM_I2C_OWN_ADDRESS:
-    case ARM_I2C_BUS_CLEAR:
-    case ARM_I2C_ABORT_TRANSFER:
-    default:
-        return ARM_DRIVER_ERROR_UNSUPPORTED;
+        case ARM_I2C_OWN_ADDRESS:
+        case ARM_I2C_BUS_CLEAR:
+        case ARM_I2C_ABORT_TRANSFER:
+        default:
+            return ARM_DRIVER_ERROR_UNSUPPORTED;
     }
 }
 
-static ARM_I2C_STATUS ARM_I2C_GetStatus(void)
-{
+static ARM_I2C_STATUS ARM_I2C_GetStatus(void) {
     /* SYS_STATUS sysStatus = DRV_I2C_Status(ME.sysMod); */
     ARM_I2C_STATUS armStatus = {};
     // NOTE unsupported
@@ -307,19 +272,8 @@ static ARM_I2C_STATUS ARM_I2C_GetStatus(void)
 
 // End I2C Interface
 
-extern \
-ARM_DRIVER_I2C Driver_I2C0;
-ARM_DRIVER_I2C Driver_I2C0 = {
-    ARM_I2C_GetVersion,
-    ARM_I2C_GetCapabilities,
-    ARM_I2C_Initialize,
-    ARM_I2C_Uninitialize,
-    ARM_I2C_PowerControl,
-    ARM_I2C_MasterTransmit,
-    ARM_I2C_MasterReceive,
-    ARM_I2C_SlaveTransmit,
-    ARM_I2C_SlaveReceive,
-    ARM_I2C_GetDataCount,
-    ARM_I2C_Control,
-    ARM_I2C_GetStatus
-};
+extern ARM_DRIVER_I2C Driver_I2C0;
+ARM_DRIVER_I2C Driver_I2C0 = {ARM_I2C_GetVersion,    ARM_I2C_GetCapabilities, ARM_I2C_Initialize,
+                              ARM_I2C_Uninitialize,  ARM_I2C_PowerControl,    ARM_I2C_MasterTransmit,
+                              ARM_I2C_MasterReceive, ARM_I2C_SlaveTransmit,   ARM_I2C_SlaveReceive,
+                              ARM_I2C_GetDataCount,  ARM_I2C_Control,         ARM_I2C_GetStatus};

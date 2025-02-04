@@ -15,8 +15,8 @@ extern uint32_t _sstack;
 extern uint32_t _estack;
 
 /* Optional application-provided functions */
-extern void __attribute__((weak,long_call)) _on_reset(void);
-extern void __attribute__((weak,long_call)) _on_bootstrap(void);
+extern void __attribute__((weak, long_call)) _on_reset(void);
+extern void __attribute__((weak, long_call)) _on_bootstrap(void);
 
 #define __builtin_software_breakpoint() __BKPT(0);
 
@@ -33,12 +33,12 @@ int main(void);
 
 #define OK 0
 #define ERROR -1
-#define CHECK(cond, err_string, ...)                                       \
-  do {                                                                     \
-    if (!(cond)) {                                                         \
-      __VA_ARGS__;                                                         \
-      break;                                                               \
-    }                                                                      \
-  } while (0);
+#define CHECK(cond, err_string, ...) \
+    do {                             \
+        if (!(cond)) {               \
+            __VA_ARGS__;             \
+            break;                   \
+        }                            \
+    } while (0);
 
-#endif // _DEVICE_COMMON_H
+#endif  // _DEVICE_COMMON_H

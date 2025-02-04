@@ -7,9 +7,9 @@
 #ifndef StreamDriver_HPP
 #define StreamDriver_HPP
 
+#include <FprimeAtmel.hpp>
 #include "Atmel/Drv/StreamDriver/StreamDriverComponentAc.hpp"
 #include "Os/Task.hpp"
-#include <FprimeAtmel.hpp>
 
 namespace Atmel {
 // Allow for setting serial ports on linux from the inputs

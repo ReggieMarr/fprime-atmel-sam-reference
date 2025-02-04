@@ -1,27 +1,25 @@
 #include "Driver_GPIO.h"
-#include "Driver_USART.h"
-#include "os_tick.h"
-#include "sam.h"
-#include "hal_defs.h"
-#include "cmsis_os2.h"
-#include "peripheral/clk/plib_clk.h"
-#include "definitions.h"
 #include "Driver_I2C.h"
+#include "Driver_USART.h"
+#include "cmsis_os2.h"
+#include "definitions.h"
+#include "hal_defs.h"
+#include "os_tick.h"
+#include "peripheral/clk/plib_clk.h"
+#include "sam.h"
 
 extern ARM_DRIVER_I2C Driver_I2C0;
-static ARM_DRIVER_I2C *I2Cdrv = &Driver_I2C0;
+static ARM_DRIVER_I2C* I2Cdrv = &Driver_I2C0;
 
 extern ARM_DRIVER_USART Driver_USART0;
-static ARM_DRIVER_USART *usartDrv = &Driver_USART0;
+static ARM_DRIVER_USART* usartDrv = &Driver_USART0;
 
+#define LED0_PIN PIO_PA23
+#define LED_PIO PIOA_REGS
+#define LED1_PIN PIO_PC9
+#define LED1_PIO PIOC_REGS
 
-#define LED0_PIN    PIO_PA23
-#define LED_PIO     PIOA_REGS
-#define LED1_PIN    PIO_PC9
-#define LED1_PIO    PIOC_REGS
-
-static void setupLeds(void)
-{
+static void setupLeds(void) {
     // Enable clocks for GPIO
     PMC_REGS->PMC_PCER0 = (1 << ID_PIOA) | (1 << ID_PIOC);
 
@@ -58,12 +56,12 @@ void _on_bootstrap(void) {
     EFC_Initialize();
 
     CLOCK_Initialize();
-	PIO_Initialize();
+    PIO_Initialize();
 
-	RSWDT_REGS->RSWDT_MR = RSWDT_MR_WDDIS_Msk;	// Disable RSWDT
-	WDT_REGS->WDT_MR = WDT_MR_WDDIS_Msk; 		// Disable WDT
+    RSWDT_REGS->RSWDT_MR = RSWDT_MR_WDDIS_Msk;  // Disable RSWDT
+    WDT_REGS->WDT_MR = WDT_MR_WDDIS_Msk;        // Disable WDT
 
-	TWIHS0_Initialize();
+    TWIHS0_Initialize();
     USART1_Initialize();
 
     /* NOTE could pass a user defined signal event handler here */
@@ -87,15 +85,15 @@ typedef struct {
     size_t tickDelay;
 } blinkArg_t;
 
-void blink_led (void *argument) {
-    blinkArg_t *args = (blinkArg_t *) argument;
-    volatile pio_registers_t *ledReg = NULL;
+void blink_led(void* argument) {
+    blinkArg_t* args = (blinkArg_t*)argument;
+    volatile pio_registers_t* ledReg = NULL;
     volatile uint32_t ledPin;
     size_t dfltTickDelay = 50000;
     // Off
     LED1_PIO->PIO_CODR = LED1_PIN;
     LED_PIO->PIO_CODR = LED0_PIN;
-    osDelay(dfltTickDelay/2);
+    osDelay(dfltTickDelay / 2);
     LED1_PIO->PIO_SODR = LED1_PIN;
     LED_PIO->PIO_SODR = LED0_PIN;
 
@@ -112,16 +110,14 @@ void blink_led (void *argument) {
     if (args->idx == 0) {
         ledReg = LED_PIO;
         ledPin = LED0_PIN;
-    }
-    else if (args->idx == 1) {
+    } else if (args->idx == 1) {
         ledReg = LED1_PIO;
         ledPin = LED1_PIN;
-    }
-    else if (args->idx < 0) {
+    } else if (args->idx < 0) {
         LED_PIO->PIO_CODR = LED0_PIN;
     }
 
-    while(ledReg != NULL) {
+    while (ledReg != NULL) {
         // Set output (LED OFF)
         ledReg->PIO_SODR = ledPin;
         osDelay(args->tickDelay);
@@ -144,7 +140,8 @@ int main(void) {
     osKernelStart();
 
     /* Wait forever here other wise the owned threads will die */
-    for (;;) {}
+    for (;;) {
+    }
 
     return 0;
 }

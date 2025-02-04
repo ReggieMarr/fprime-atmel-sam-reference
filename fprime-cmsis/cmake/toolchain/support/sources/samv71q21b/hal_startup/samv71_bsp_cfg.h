@@ -1,9 +1,8 @@
 #ifndef SAMV71_BSP_CFG_H_
 #define SAMV71_BSP_CFG_H_
 
-#ifdef  __cplusplus
-extern "C"
-{
+#ifdef __cplusplus
+extern "C" {
 #endif
 
 #include "pioConfig.h"
@@ -11,7 +10,7 @@ extern "C"
 
 extern pioGPIOConfig_t pioConfigs[MAX_PIO_PIN];
 
-#ifdef  __cplusplus
+#ifdef __cplusplus
 }
 #endif
 

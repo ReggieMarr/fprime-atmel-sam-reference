@@ -10,7 +10,7 @@ extern "C" {
 // Required function prototypes due to config settings
 
 extern void vApplicationMallocFailedHook(void);
-extern void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName);
+extern void vApplicationStackOverflowHook(TaskHandle_t xTask, char* pcTaskName);
 
 extern int main(void);
 
@@ -29,7 +29,7 @@ extern uint32_t _estack;
 // ensure hardware states are as desired for startup conditions
 // NOTE this is pre-access to the C library and/or other important sections
 extern void __attribute__((long_call)) _on_reset(void);
-extern void __attribute__((weak,long_call)) _on_bootstrap(void);
+extern void __attribute__((weak, long_call)) _on_bootstrap(void);
 
 extern void __libc_init_array(void);
 

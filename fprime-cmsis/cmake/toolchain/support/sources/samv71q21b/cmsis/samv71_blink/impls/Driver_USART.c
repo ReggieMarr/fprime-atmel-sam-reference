@@ -20,17 +20,14 @@
 #include <stdint.h>
 #include <string.h>
 #include "driver/usart/drv_usart.h"
+#include "hal_defs.h"
 #include "peripheral/usart/plib_usart1.h"
 #include "system/system_module.h"
-#include "hal_defs.h"
 
-#define ARM_USART_DRV_VERSION    ARM_DRIVER_VERSION_MAJOR_MINOR(1, 0)  /* driver version */
+#define ARM_USART_DRV_VERSION ARM_DRIVER_VERSION_MAJOR_MINOR(1, 0) /* driver version */
 
 /* Driver Version */
-static const ARM_DRIVER_VERSION DriverVersion = {
-    ARM_USART_API_VERSION,
-    ARM_USART_DRV_VERSION
-};
+static const ARM_DRIVER_VERSION DriverVersion = {ARM_USART_API_VERSION, ARM_USART_DRV_VERSION};
 
 /* Driver Capabilities */
 static const ARM_USART_CAPABILITIES DriverCapabilities = {
@@ -62,18 +59,15 @@ static const ARM_USART_CAPABILITIES DriverCapabilities = {
 //   Functions
 //
 
-static ARM_DRIVER_VERSION ARM_USART_GetVersion(void)
-{
-  return DriverVersion;
+static ARM_DRIVER_VERSION ARM_USART_GetVersion(void) {
+    return DriverVersion;
 }
 
-static ARM_USART_CAPABILITIES ARM_USART_GetCapabilities(void)
-{
-  return DriverCapabilities;
+static ARM_USART_CAPABILITIES ARM_USART_GetCapabilities(void) {
+    return DriverCapabilities;
 }
 
 static DRV_USART_CLIENT_OBJ drvUSART0ClientObjPool[DRV_USART_CLIENTS_NUMBER_IDX0];
-
 
 const DRV_USART_PLIB_INTERFACE drvUsart0PlibAPI = {
     .readCallbackRegister = (DRV_USART_PLIB_READ_CALLBACK_REG)USART1_ReadCallbackRegister,
@@ -86,16 +80,14 @@ const DRV_USART_PLIB_INTERFACE drvUsart0PlibAPI = {
     .writeIsBusy = (DRV_USART_PLIB_WRITE_IS_BUSY)USART1_WriteIsBusy,
     .writeCountGet = (DRV_USART_PLIB_WRITE_COUNT_GET)USART1_WriteCountGet,
     .errorGet = (DRV_USART_PLIB_ERROR_GET)USART1_ErrorGet,
-    .serialSetup = (DRV_USART_PLIB_SERIAL_SETUP)USART1_SerialSetup
-};
+    .serialSetup = (DRV_USART_PLIB_SERIAL_SETUP)USART1_SerialSetup};
 
-const uint32_t drvUsart0remapDataWidth[] = { 0x0, 0x40, 0x80, 0xC0, 0x20000 };
-const uint32_t drvUsart0remapParity[] = { 0x800, 0x0, 0x200, 0x600, 0x400, 0xC00 };
-const uint32_t drvUsart0remapStopBits[] = { 0x0, 0x1000, 0x2000 };
-const uint32_t drvUsart0remapError[] = { 0x20, 0x80, 0x40 };
+const uint32_t drvUsart0remapDataWidth[] = {0x0, 0x40, 0x80, 0xC0, 0x20000};
+const uint32_t drvUsart0remapParity[] = {0x800, 0x0, 0x200, 0x600, 0x400, 0xC00};
+const uint32_t drvUsart0remapStopBits[] = {0x0, 0x1000, 0x2000};
+const uint32_t drvUsart0remapError[] = {0x20, 0x80, 0x40};
 
-const DRV_USART_INIT drvUsart0InitData =
-{
+const DRV_USART_INIT drvUsart0InitData = {
     .usartPlib = &drvUsart0PlibAPI,
 
     /* USART Number of clients */
@@ -103,7 +95,6 @@ const DRV_USART_INIT drvUsart0InitData =
 
     /* USART Client Objects Pool */
     .clientObjPool = (uintptr_t)&drvUSART0ClientObjPool[0],
-
 
     .remapDataWidth = drvUsart0remapDataWidth,
 
@@ -131,15 +122,14 @@ typedef struct {
 
 static impl_t ME;
 
-static int32_t ARM_USART_Initialize(ARM_USART_SignalEvent_t cb_event)
-{
+static int32_t ARM_USART_Initialize(ARM_USART_SignalEvent_t cb_event) {
     if (ME.initialized) {
         return ARM_DRIVER_OK;
     }
 
     ME.cb_event = cb_event;
 
-    ME.sysObj = DRV_USART_Initialize(DRV_USART_INDEX_0, (SYS_MODULE_INIT *)&drvUsart0InitData);
+    ME.sysObj = DRV_USART_Initialize(DRV_USART_INDEX_0, (SYS_MODULE_INIT*)&drvUsart0InitData);
 
     if (ME.sysObj == SYS_MODULE_OBJ_INVALID) {
         return ARM_DRIVER_ERROR;
@@ -150,9 +140,7 @@ static int32_t ARM_USART_Initialize(ARM_USART_SignalEvent_t cb_event)
         // NOTE Could add timeout here
     }
 
-    ME.handle = DRV_USART_Open(DRV_USART_INDEX_0,
-                              DRV_IO_INTENT_READWRITE |
-                              DRV_IO_INTENT_NONBLOCKING);
+    ME.handle = DRV_USART_Open(DRV_USART_INDEX_0, DRV_IO_INTENT_READWRITE | DRV_IO_INTENT_NONBLOCKING);
     CHECK(ME.handle == DRV_HANDLE_INVALID, return ARM_DRIVER_ERROR);
 
     ME.initialized = true;
@@ -161,8 +149,7 @@ static int32_t ARM_USART_Initialize(ARM_USART_SignalEvent_t cb_event)
     return ARM_DRIVER_OK;
 }
 
-static int32_t ARM_USART_Uninitialize(void)
-{
+static int32_t ARM_USART_Uninitialize(void) {
     if (!ME.initialized) {
         return ARM_DRIVER_OK;
     }
@@ -183,23 +170,20 @@ static int32_t ARM_USART_Uninitialize(void)
     return ARM_DRIVER_OK;
 }
 
-static int32_t ARM_USART_Send(const void *data, uint32_t num)
-{
-    if (!data || !num) return ARM_DRIVER_ERROR_PARAMETER;
-    if (!ME.initialized) return ARM_DRIVER_ERROR;
-    if (ME.status.tx_busy) return ARM_DRIVER_ERROR_BUSY;
+static int32_t ARM_USART_Send(const void* data, uint32_t num) {
+    if (!data || !num)
+        return ARM_DRIVER_ERROR_PARAMETER;
+    if (!ME.initialized)
+        return ARM_DRIVER_ERROR;
+    if (ME.status.tx_busy)
+        return ARM_DRIVER_ERROR_BUSY;
 
     ME.status.tx_busy = 1;
     ME.tx_count = 0;
 
-    bool success = DRV_USART_WriteBuffer(
-        ME.handle,
-        (void*)data,
-        num
-    );
+    bool success = DRV_USART_WriteBuffer(ME.handle, (void*)data, num);
 
-    if (!success)
-    {
+    if (!success) {
         ME.status.tx_busy = 0;
         return ARM_DRIVER_ERROR;
     }
@@ -207,23 +191,20 @@ static int32_t ARM_USART_Send(const void *data, uint32_t num)
     return ARM_DRIVER_OK;
 }
 
-static int32_t ARM_USART_Receive(void *data, uint32_t num)
-{
-    if (!data || !num) return ARM_DRIVER_ERROR_PARAMETER;
-    if (!ME.initialized) return ARM_DRIVER_ERROR;
-    if (ME.status.rx_busy) return ARM_DRIVER_ERROR_BUSY;
+static int32_t ARM_USART_Receive(void* data, uint32_t num) {
+    if (!data || !num)
+        return ARM_DRIVER_ERROR_PARAMETER;
+    if (!ME.initialized)
+        return ARM_DRIVER_ERROR;
+    if (ME.status.rx_busy)
+        return ARM_DRIVER_ERROR_BUSY;
 
     ME.status.rx_busy = 1;
     ME.rx_count = 0;
 
-    bool success = DRV_USART_ReadBuffer(
-        ME.handle,
-        data,
-        num
-    );
+    bool success = DRV_USART_ReadBuffer(ME.handle, data, num);
 
-    if (!success)
-    {
+    if (!success) {
         ME.status.rx_busy = 0;
         return ARM_DRIVER_ERROR;
     }
@@ -231,67 +212,79 @@ static int32_t ARM_USART_Receive(void *data, uint32_t num)
     return ARM_DRIVER_OK;
 }
 
-static int32_t ARM_USART_Transfer(const void *data_out, void *data_in, uint32_t num)
-{
+static int32_t ARM_USART_Transfer(const void* data_out, void* data_in, uint32_t num) {
     // Not supported in this implementation as Harmony doesn't provide direct transfer
     return ARM_DRIVER_ERROR_UNSUPPORTED;
 }
 
-static uint32_t ARM_USART_GetTxCount(void)
-{
+static uint32_t ARM_USART_GetTxCount(void) {
     return ME.tx_count;
 }
 
-static uint32_t ARM_USART_GetRxCount(void)
-{
+static uint32_t ARM_USART_GetRxCount(void) {
     return ME.rx_count;
 }
 
-static int32_t ARM_USART_Control(uint32_t control, uint32_t arg)
-{
-    if (!ME.initialized) return ARM_DRIVER_ERROR;
+static int32_t ARM_USART_Control(uint32_t control, uint32_t arg) {
+    if (!ME.initialized)
+        return ARM_DRIVER_ERROR;
 
-    switch (control & ARM_USART_CONTROL_Msk)
-    {
-        case ARM_USART_MODE_ASYNCHRONOUS:
-        {
-            DRV_USART_SERIAL_SETUP setup = {
-                .baudRate = arg,
-                .dataWidth = DRV_USART_DATA_8_BIT,
-                .parity = DRV_USART_PARITY_NONE,
-                .stopBits = DRV_USART_STOP_1_BIT
-            };
+    switch (control & ARM_USART_CONTROL_Msk) {
+        case ARM_USART_MODE_ASYNCHRONOUS: {
+            DRV_USART_SERIAL_SETUP setup = {.baudRate = arg,
+                                            .dataWidth = DRV_USART_DATA_8_BIT,
+                                            .parity = DRV_USART_PARITY_NONE,
+                                            .stopBits = DRV_USART_STOP_1_BIT};
 
             // Apply data bits setting
-            switch (control & ARM_USART_DATA_BITS_Msk)
-            {
-                case ARM_USART_DATA_BITS_5: setup.dataWidth = DRV_USART_DATA_5_BIT; break;
-                case ARM_USART_DATA_BITS_6: setup.dataWidth = DRV_USART_DATA_6_BIT; break;
-                case ARM_USART_DATA_BITS_7: setup.dataWidth = DRV_USART_DATA_7_BIT; break;
-                case ARM_USART_DATA_BITS_8: setup.dataWidth = DRV_USART_DATA_8_BIT; break;
-                case ARM_USART_DATA_BITS_9: setup.dataWidth = DRV_USART_DATA_9_BIT; break;
-                default: return ARM_DRIVER_ERROR_UNSUPPORTED;
+            switch (control & ARM_USART_DATA_BITS_Msk) {
+                case ARM_USART_DATA_BITS_5:
+                    setup.dataWidth = DRV_USART_DATA_5_BIT;
+                    break;
+                case ARM_USART_DATA_BITS_6:
+                    setup.dataWidth = DRV_USART_DATA_6_BIT;
+                    break;
+                case ARM_USART_DATA_BITS_7:
+                    setup.dataWidth = DRV_USART_DATA_7_BIT;
+                    break;
+                case ARM_USART_DATA_BITS_8:
+                    setup.dataWidth = DRV_USART_DATA_8_BIT;
+                    break;
+                case ARM_USART_DATA_BITS_9:
+                    setup.dataWidth = DRV_USART_DATA_9_BIT;
+                    break;
+                default:
+                    return ARM_DRIVER_ERROR_UNSUPPORTED;
             }
 
             // Apply parity setting
-            switch (control & ARM_USART_PARITY_Msk)
-            {
-                case ARM_USART_PARITY_NONE: setup.parity = DRV_USART_PARITY_NONE; break;
-                case ARM_USART_PARITY_EVEN: setup.parity = DRV_USART_PARITY_EVEN; break;
-                case ARM_USART_PARITY_ODD:  setup.parity = DRV_USART_PARITY_ODD; break;
-                default: return ARM_DRIVER_ERROR_UNSUPPORTED;
+            switch (control & ARM_USART_PARITY_Msk) {
+                case ARM_USART_PARITY_NONE:
+                    setup.parity = DRV_USART_PARITY_NONE;
+                    break;
+                case ARM_USART_PARITY_EVEN:
+                    setup.parity = DRV_USART_PARITY_EVEN;
+                    break;
+                case ARM_USART_PARITY_ODD:
+                    setup.parity = DRV_USART_PARITY_ODD;
+                    break;
+                default:
+                    return ARM_DRIVER_ERROR_UNSUPPORTED;
             }
 
             // Apply stop bits setting
-            switch (control & ARM_USART_STOP_BITS_Msk)
-            {
-                case ARM_USART_STOP_BITS_1: setup.stopBits = DRV_USART_STOP_1_BIT; break;
-                case ARM_USART_STOP_BITS_2: setup.stopBits = DRV_USART_STOP_2_BIT; break;
-                default: return ARM_DRIVER_ERROR_UNSUPPORTED;
+            switch (control & ARM_USART_STOP_BITS_Msk) {
+                case ARM_USART_STOP_BITS_1:
+                    setup.stopBits = DRV_USART_STOP_1_BIT;
+                    break;
+                case ARM_USART_STOP_BITS_2:
+                    setup.stopBits = DRV_USART_STOP_2_BIT;
+                    break;
+                default:
+                    return ARM_DRIVER_ERROR_UNSUPPORTED;
             }
 
-            if (!DRV_USART_SerialSetup(ME.handle, &setup))
-            {
+            if (!DRV_USART_SerialSetup(ME.handle, &setup)) {
                 return ARM_DRIVER_ERROR;
             }
             break;
@@ -324,14 +317,12 @@ static int32_t ARM_USART_Control(uint32_t control, uint32_t arg)
     return ARM_DRIVER_OK;
 }
 
-static int32_t ARM_USART_PowerControl(ARM_POWER_STATE state)
-{
+static int32_t ARM_USART_PowerControl(ARM_POWER_STATE state) {
     if (!ME.initialized) {
         return ARM_DRIVER_ERROR;
     }
 
-    switch (state)
-    {
+    switch (state) {
         case ARM_POWER_OFF:
             if (!ME.powered) {
                 return ARM_DRIVER_OK;
@@ -387,25 +378,20 @@ static int32_t ARM_USART_PowerControl(ARM_POWER_STATE state)
     return ARM_DRIVER_OK;
 }
 
-static ARM_USART_STATUS ARM_USART_GetStatus(void)
-{
+static ARM_USART_STATUS ARM_USART_GetStatus(void) {
     return ME.status;
 }
 
-static ARM_USART_MODEM_STATUS ARM_USART_GetModemStatus(void)
-{
+static ARM_USART_MODEM_STATUS ARM_USART_GetModemStatus(void) {
     return ME.modem_status;
 }
 
-static int32_t ARM_USART_SetModemControl(ARM_USART_MODEM_CONTROL control)
-{
+static int32_t ARM_USART_SetModemControl(ARM_USART_MODEM_CONTROL control) {
     return 0;
 }
 
-void __attribute__((weak)) ARM_USART_SignalEvent(uint32_t event)
-{
-    switch(event)
-    {
+void __attribute__((weak)) ARM_USART_SignalEvent(uint32_t event) {
+    switch (event) {
         case DRV_USART_BUFFER_EVENT_PENDING:
             // Signal ARM_I2C_EVENT_TRANSFER_INCOMPLETE
             break;
@@ -421,27 +407,14 @@ void __attribute__((weak)) ARM_USART_SignalEvent(uint32_t event)
             // Signal appropriate error event
             // (ARM_I2C_EVENT_ADDRESS_NACK, ARM_I2C_EVENT_BUS_ERROR, etc.)
             break;
-
     }
 }
 
 // End USART Interface
 
-extern \
-ARM_DRIVER_USART Driver_USART0;
-ARM_DRIVER_USART Driver_USART0 = {
-    ARM_USART_GetVersion,
-    ARM_USART_GetCapabilities,
-    ARM_USART_Initialize,
-    ARM_USART_Uninitialize,
-    ARM_USART_PowerControl,
-    ARM_USART_Send,
-    ARM_USART_Receive,
-    ARM_USART_Transfer,
-    ARM_USART_GetTxCount,
-    ARM_USART_GetRxCount,
-    ARM_USART_Control,
-    ARM_USART_GetStatus,
-    ARM_USART_SetModemControl,
-    ARM_USART_GetModemStatus
-};
+extern ARM_DRIVER_USART Driver_USART0;
+ARM_DRIVER_USART Driver_USART0 = {ARM_USART_GetVersion,      ARM_USART_GetCapabilities, ARM_USART_Initialize,
+                                  ARM_USART_Uninitialize,    ARM_USART_PowerControl,    ARM_USART_Send,
+                                  ARM_USART_Receive,         ARM_USART_Transfer,        ARM_USART_GetTxCount,
+                                  ARM_USART_GetRxCount,      ARM_USART_Control,         ARM_USART_GetStatus,
+                                  ARM_USART_SetModemControl, ARM_USART_GetModemStatus};

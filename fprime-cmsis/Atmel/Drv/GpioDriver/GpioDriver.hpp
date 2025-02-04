@@ -9,8 +9,8 @@
 
 #include <Drv/GpioDriverComponentAc.hpp>
 #include "Driver_GPIO.h"
-#include "sam.h"  // SAMV71 peripheral access
 #include "hal_defs.h"
+#include "sam.h"  // SAMV71 peripheral access
 
 namespace Atmel {
 
@@ -51,23 +51,21 @@ class GpioDriver : public GpioDriverComponentBase {
     // ----------------------------------------------------------------------
 
     //! Handler implementation for gpioRead
-    Drv::GpioStatus gpioRead_handler(
-        FwIndexType portNum,  //!< The port number
-        Fw::Logic& state      //!< The state of the GPIO
-    ) override;
+    Drv::GpioStatus gpioRead_handler(FwIndexType portNum,  //!< The port number
+                                     Fw::Logic& state      //!< The state of the GPIO
+                                     ) override;
 
     //! Handler implementation for gpioWrite
-    Drv::GpioStatus gpioWrite_handler(
-        FwIndexType portNum,    //!< The port number
-        const Fw::Logic& state  //!< The state to write to the GPIO
-    ) override;
+    Drv::GpioStatus gpioWrite_handler(FwIndexType portNum,    //!< The port number
+                                      const Fw::Logic& state  //!< The state to write to the GPIO
+                                      ) override;
 
     // ----------------------------------------------------------------------
     // Private member variables
     // ----------------------------------------------------------------------
 
-    ARM_DRIVER_GPIO *m_gpio = &DRIVER_GPIO;
-    bool m_initialized;         //!< Initialization status
+    ARM_DRIVER_GPIO* m_gpio = &DRIVER_GPIO;
+    bool m_initialized;  //!< Initialization status
 };
 
 }  // namespace Atmel

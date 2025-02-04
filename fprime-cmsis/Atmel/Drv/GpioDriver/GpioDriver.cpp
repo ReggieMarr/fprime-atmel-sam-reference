@@ -8,10 +8,10 @@
 #ifndef SAMV71_GPIO_DRIVER_HPP
 #define SAMV71_GPIO_DRIVER_HPP
 
-#include <Fw/Types/BasicTypes.hpp>
-#include <Drv/GpioDriverComponentAc.hpp>
 #include "GpioDriver.hpp"
+#include <Drv/GpioDriverComponentAc.hpp>
 #include <FpConfig.hpp>
+#include <Fw/Types/BasicTypes.hpp>
 #include "Driver_GPIO.h"
 
 namespace Atmel {
@@ -20,21 +20,18 @@ namespace Atmel {
 // Construction, initialization, and destruction
 // ----------------------------------------------------------------------
 
-GpioDriver::GpioDriver(const char* const compName) :
-    GpioDriverComponentBase(compName),
-    this->m_gpio(-1),
-    this->m_port(nullptr),
-    this->m_pin(0),
-    this->m_initialized(false)
-{
-}
+GpioDriver::GpioDriver(const char* const compName)
+    : GpioDriverComponentBase(compName),
+      this->m_gpio(-1),
+      this->m_port(nullptr),
+      this->m_pin(0),
+      this->m_initialized(false) {}
 
 void GpioDriver::init(const NATIVE_INT_TYPE instance) {
     GpioDriverComponentBase::init(instance);
 }
 
-GpioDriver::~GpioDriver() {
-}
+GpioDriver::~GpioDriver() {}
 
 bool GpioDriver::open(NATIVE_INT_TYPE gpioPin, GpioDirection direction) {
     // Store GPIO number
@@ -66,10 +63,7 @@ bool GpioDriver::open(NATIVE_INT_TYPE gpioPin, GpioDirection direction) {
 // Handler implementations
 // ----------------------------------------------------------------------
 
-Drv::GpioStatus GpioDriver::gpioRead_handler(
-    const NATIVE_INT_TYPE portNum,
-    Fw::Logic& state
-) {
+Drv::GpioStatus GpioDriver::gpioRead_handler(const NATIVE_INT_TYPE portNum, Fw::Logic& state) {
     if (!this->m_initialized) {
         return Drv::GpioStatus::GPIO_UNINIT;
     }
@@ -81,10 +75,7 @@ Drv::GpioStatus GpioDriver::gpioRead_handler(
     return Drv::GpioStatus::GPIO_OK;
 }
 
-Drv::GpioStatus GpioDriver::gpioWrite_handler(
-    const NATIVE_INT_TYPE portNum,
-    const Fw::Logic& state
-) {
+Drv::GpioStatus GpioDriver::gpioWrite_handler(const NATIVE_INT_TYPE portNum, const Fw::Logic& state) {
     if (!this->m_initialized) {
         return Drv::GpioStatus::GPIO_UNINIT;
     }
@@ -101,4 +92,4 @@ Drv::GpioStatus GpioDriver::gpioWrite_handler(
 
 }  // namespace Atmel
 
-#endif // SAMV71_GPIO_DRIVER_HPP
+#endif  // SAMV71_GPIO_DRIVER_HPP

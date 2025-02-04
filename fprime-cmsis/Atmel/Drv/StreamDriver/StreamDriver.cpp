@@ -14,9 +14,7 @@ namespace Atmel {
 // ----------------------------------------------------------------------
 
 StreamDriver ::StreamDriver(const char* compName)
-    : StreamDriverComponentBase(compName),
-      m_port_number(0),
-      m_port_pointer(static_cast<POINTER_CAST>(NULL)) {}
+    : StreamDriverComponentBase(compName), m_port_number(0), m_port_pointer(static_cast<POINTER_CAST>(NULL)) {}
 
 StreamDriver ::~StreamDriver(void) {}
 
@@ -34,7 +32,7 @@ void StreamDriver ::schedIn_handler(const NATIVE_INT_TYPE portNum, NATIVE_UINT_T
     if (not reinterpret_cast<Stream*>(m_port_pointer)->available()) {
         return;
     }
-    
+
     Fw::Buffer recv_buffer = this->allocate_out(0, SERIAL_BUFFER_SIZE);
     read_data(recv_buffer);
     recv_out(0, recv_buffer, Drv::RecvStatus::RECV_OK);
