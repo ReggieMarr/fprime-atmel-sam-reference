@@ -122,11 +122,13 @@ static int32_t GPIO_SetDirection(ARM_GPIO_Pin_t pin, ARM_GPIO_DIRECTION directio
 
     switch (direction) {
         case ARM_GPIO_INPUT:
-            pioPort->PIO_ODR = pin_mask;
+            pioPort->PIO_ODR |= pin_mask;
+            pioPort->PIO_OER &= ~pin_mask;
             break;
 
         case ARM_GPIO_OUTPUT:
-            pioPort->PIO_OER = pin_mask;
+            pioPort->PIO_OER |= pin_mask;
+            pioPort->PIO_ODR &= ~pin_mask;
             break;
 
         default:
@@ -160,10 +162,12 @@ static int32_t GPIO_SetOutputMode(ARM_GPIO_Pin_t pin, ARM_GPIO_OUTPUT_MODE mode)
     // so to support open-drain mode we enable it
     switch (mode) {
         case ARM_GPIO_OPEN_DRAIN:
-            pioPort->PIO_MDER = pin_mask;
+            pioPort->PIO_MDER |= pin_mask;
+            pioPort->PIO_MDDR &= ~pin_mask;
             break;
         case ARM_GPIO_PUSH_PULL:
-            pioPort->PIO_MDDR = pin_mask;
+            pioPort->PIO_MDDR |= pin_mask;
+            pioPort->PIO_MDDR &= pin_mask;
             break;
         default:
             result = ARM_DRIVER_ERROR_PARAMETER;
@@ -190,20 +194,20 @@ static int32_t GPIO_SetPullResistor(ARM_GPIO_Pin_t pin, ARM_GPIO_PULL_RESISTOR r
 
     switch (resistor) {
         case ARM_GPIO_PULL_UP:
-            pioPort->PIO_PUER = pin_mask;  // Enable pull-up
+            pioPort->PIO_PUER |= pin_mask;  // Enable pull-up
             desiredPpdr = false;
             desiredPusr = true;
             break;
 
         case ARM_GPIO_PULL_DOWN:
-            pioPort->PIO_PPDER = pin_mask;  // Enable pull-down
+            pioPort->PIO_PPDER |= pin_mask;  // Enable pull-down
             desiredPpdr = true;
             desiredPusr = false;
             break;
 
         case ARM_GPIO_PULL_NONE:
-            pioPort->PIO_PPDER = ~pin_mask;  // Disable pull-down
-            pioPort->PIO_PUER = ~pin_mask;   // Disable pull-up
+            pioPort->PIO_PPDER &= ~pin_mask;  // Disable pull-down
+            pioPort->PIO_PUER &= ~pin_mask;   // Disable pull-up
             break;
 
         default:
@@ -250,17 +254,17 @@ static int32_t GPIO_SetEventTrigger(ARM_GPIO_Pin_t pin, ARM_GPIO_EVENT_TRIGGER t
 
     switch (trigger) {
         case ARM_GPIO_TRIGGER_RISING_EDGE:
-            pioPort->PIO_REHLSR = pin_mask;  // Select Rising edge
+            pioPort->PIO_REHLSR |= pin_mask;  // Select Rising edge
             break;
 
         case ARM_GPIO_TRIGGER_FALLING_EDGE:
-            pioPort->PIO_FELLSR = pin_mask;  // Select Falling edge
+            pioPort->PIO_FELLSR |= pin_mask;  // Select Falling edge
             break;
 
         case ARM_GPIO_TRIGGER_EITHER_EDGE:
             // Configure both edges
-            pioPort->PIO_REHLSR = pin_mask;  // Enable Rising edge
-            pioPort->PIO_FELLSR = pin_mask;  // Enable Falling edge
+            pioPort->PIO_REHLSR |= pin_mask;  // Enable Rising edge
+            pioPort->PIO_FELLSR |= pin_mask;  // Enable Falling edge
             break;
 
         default:
@@ -269,7 +273,7 @@ static int32_t GPIO_SetEventTrigger(ARM_GPIO_Pin_t pin, ARM_GPIO_EVENT_TRIGGER t
     }
 
     // Enable interrupt if trigger is not NONE
-    pioPort->PIO_IER = pin_mask;
+    pioPort->PIO_IER |= pin_mask;
 
     // Re-enable write protection
     CHECK(SET_WRITE_PROTECTION(pin, true) == ARM_DRIVER_OK, return ARM_DRIVER_ERROR);
@@ -286,9 +290,9 @@ static void GPIO_SetOutput(ARM_GPIO_Pin_t pin, uint32_t val) {
     volatile pio_registers_t* pioPort = (pio_registers_t*)port;
 
     if (val) {
-        pioPort->PIO_SODR = pin_mask;
+        pioPort->PIO_SODR |= pin_mask;
     } else {
-        pioPort->PIO_CODR = pin_mask;
+        pioPort->PIO_CODR |= pin_mask;
     }
     // NOTE alternatively we could use the output data status register however that provides
     // blanket writes to each pin which is less effective in this case
