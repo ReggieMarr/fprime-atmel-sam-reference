@@ -37,7 +37,7 @@ static inline bool IS_PIN_AVAILABLE(ARM_GPIO_Pin_t pin) {
 
     // Next we determine if the pin is configured as a GPIO
     uint32_t port = PIN_TO_PORT(pin);
-    uint32_t pin_mask = 255;
+    uint32_t pinMask = 255;
 
     switch (port) {
         case PIOA_BASE_ADDRESS:
@@ -45,7 +45,7 @@ static inline bool IS_PIN_AVAILABLE(ARM_GPIO_Pin_t pin) {
         case PIOC_BASE_ADDRESS:
         case PIOD_BASE_ADDRESS:
         case PIOE_BASE_ADDRESS:
-            pin_mask = PIN_MASK(pin);
+            pinMask = PIN_MASK(pin);
             break;
         default:
             return false;
@@ -53,23 +53,21 @@ static inline bool IS_PIN_AVAILABLE(ARM_GPIO_Pin_t pin) {
 
     volatile uint32_t pioPer = ((pio_registers_t*)port)->PIO_PER;
 
-    CHECK(!(pioPer & pin_mask), return false);
+    CHECK(!(pioPer & pinMask), return false);
 
     return true;
 }
 
-static int32_t SET_WRITE_PROTECTION(ARM_GPIO_Pin_t pin, bool enableWriteProtection) {
+static void inline SET_WRITE_PROTECTION(ARM_GPIO_Pin_t pin, bool enableWriteProtection) {
     uint32_t mask = PIO_WPMR_WPKEY_PASSWD;
     if (enableWriteProtection) {
         mask |= PIO_WPMR_WPEN_Msk;
     }
     volatile pio_registers_t* pioPort = (pio_registers_t*)PIN_TO_PORT(pin);
     pioPort->PIO_WPMR = mask;
-
-    return ARM_DRIVER_OK;
 }
 
-static bool GET_WRITE_PROTECTION_STATUS(ARM_GPIO_Pin_t pin) {
+static bool IS_PIN_WRITE_PROTECTED(ARM_GPIO_Pin_t pin) {
     uint32_t port = PIN_TO_PORT(pin);
     volatile pio_registers_t* pioPort = (pio_registers_t*)port;
     uint32_t registerVal = pioPort->PIO_WPSR;
@@ -87,10 +85,10 @@ static int32_t GPIO_Setup(ARM_GPIO_Pin_t pin, ARM_GPIO_SignalEvent_t cb_event) {
     enablePinPeriphClock(pin);
 
     uint32_t port = PIN_TO_PORT(pin);
-    uint32_t pin_mask = PIN_MASK(pin);
+    uint32_t pinMask = PIN_MASK(pin);
     volatile pio_registers_t* pioPort = (pio_registers_t*)port;
-    pioPort->PIO_PER |= pin_mask;  // Enable PIO control for our pin
-    pioPort->PIO_PDR &= ~pin_mask;
+    pioPort->PIO_PER |= pinMask;  // Enable PIO control for our pin
+    pioPort->PIO_PDR &= ~pinMask;
 
     gpio_cb_event = cb_event;
 
@@ -99,11 +97,11 @@ static int32_t GPIO_Setup(ARM_GPIO_Pin_t pin, ARM_GPIO_SignalEvent_t cb_event) {
 
 static ARM_GPIO_DIRECTION GetDirection(ARM_GPIO_Pin_t pin) {
     uint32_t port = PIN_TO_PORT(pin);
-    uint32_t pin_mask = PIN_MASK(pin);
+    uint32_t pinMask = PIN_MASK(pin);
     volatile pio_registers_t* pioPort = (pio_registers_t*)port;
     uint32_t registerVal = pioPort->PIO_OSR;
 
-    return (registerVal & pin_mask) ? ARM_GPIO_OUTPUT : ARM_GPIO_INPUT;
+    return (registerVal & pinMask) ? ARM_GPIO_OUTPUT : ARM_GPIO_INPUT;
 }
 
 // Set GPIO Direction
@@ -111,22 +109,21 @@ static int32_t GPIO_SetDirection(ARM_GPIO_Pin_t pin, ARM_GPIO_DIRECTION directio
     CHECK(IS_PIN_AVAILABLE(pin), return ARM_GPIO_ERROR_PIN)
     int32_t result = ARM_DRIVER_OK;
 
-    /* result = SET_WRITE_PROTECTION(pin, false); */
-    /* CHECK(result = ARM_DRIVER_OK, return result); */
+    SET_WRITE_PROTECTION(pin, false);
 
     uint32_t port = PIN_TO_PORT(pin);
-    uint32_t pin_mask = PIN_MASK(pin);
+    uint32_t pinMask = PIN_MASK(pin);
     volatile pio_registers_t* pioPort = (pio_registers_t*)port;
 
     switch (direction) {
         case ARM_GPIO_INPUT:
-            pioPort->PIO_ODR |= pin_mask;
-            pioPort->PIO_OER &= ~pin_mask;
+            pioPort->PIO_ODR |= pinMask;
+            pioPort->PIO_OER &= ~pinMask;
             break;
 
         case ARM_GPIO_OUTPUT:
-            pioPort->PIO_OER |= pin_mask;
-            pioPort->PIO_ODR &= ~pin_mask;
+            pioPort->PIO_OER |= pinMask;
+            pioPort->PIO_ODR &= ~pinMask;
             break;
 
         default:
@@ -134,7 +131,7 @@ static int32_t GPIO_SetDirection(ARM_GPIO_Pin_t pin, ARM_GPIO_DIRECTION directio
             break;
     }
 
-    /* CHECK(SET_WRITE_PROTECTION(pin, true) == ARM_DRIVER_OK, return ARM_DRIVER_ERROR); */
+    SET_WRITE_PROTECTION(pin, true);
 
     ARM_GPIO_DIRECTION directionStatus = GetDirection(pin);
     CHECK(directionStatus == direction, return ARM_DRIVER_ERROR);
@@ -147,32 +144,31 @@ static int32_t GPIO_SetOutputMode(ARM_GPIO_Pin_t pin, ARM_GPIO_OUTPUT_MODE mode)
     CHECK(IS_PIN_AVAILABLE(pin), return ARM_GPIO_ERROR_PIN)
 
     uint32_t port = PIN_TO_PORT(pin);
-    uint32_t pin_mask = PIN_MASK(pin);
+    uint32_t pinMask = PIN_MASK(pin);
     volatile pio_registers_t* pioPort = (pio_registers_t*)port;
 
     ARM_GPIO_DIRECTION directionStatus = GetDirection(pin);
     CHECK(directionStatus == ARM_GPIO_OUTPUT, return ARM_DRIVER_ERROR);
 
-    /* uint32_t result = SET_WRITE_PROTECTION(pin, false); */
-    /* CHECK(result = ARM_DRIVER_OK, return result); */
     uint32_t result = ARM_DRIVER_OK;
+    SET_WRITE_PROTECTION(pin, false);
 
     // Open-drain is controlled by the multi-driver registers
     // so to support open-drain mode we enable it
     switch (mode) {
         case ARM_GPIO_OPEN_DRAIN:
-            pioPort->PIO_MDER |= pin_mask;
-            pioPort->PIO_MDDR &= ~pin_mask;
+            pioPort->PIO_MDER |= pinMask;
+            pioPort->PIO_MDDR &= ~pinMask;
             break;
         case ARM_GPIO_PUSH_PULL:
-            pioPort->PIO_MDDR |= pin_mask;
-            pioPort->PIO_MDDR &= pin_mask;
+            pioPort->PIO_MDDR |= pinMask;
+            pioPort->PIO_MDDR &= pinMask;
             break;
         default:
             result = ARM_DRIVER_ERROR_PARAMETER;
     }
 
-    /* CHECK(SET_WRITE_PROTECTION(pin, true) == ARM_DRIVER_OK, return ARM_DRIVER_ERROR); */
+    SET_WRITE_PROTECTION(pin, true);
 
     return result;
 }
@@ -184,44 +180,47 @@ static int32_t GPIO_SetPullResistor(ARM_GPIO_Pin_t pin, ARM_GPIO_PULL_RESISTOR r
 
     // Get port and pin mask
     uint32_t port = PIN_TO_PORT(pin);
-    uint32_t pin_mask = PIN_MASK(pin);
+    uint32_t pinMask = PIN_MASK(pin);
     volatile pio_registers_t* pioPort = (pio_registers_t*)port;
+    uint32_t result = ARM_DRIVER_OK;
 
-    /* uint32_t result = SET_WRITE_PROTECTION(pin, false); */
-    /* CHECK(result = ARM_DRIVER_OK, return result); */
+    SET_WRITE_PROTECTION(pin, false);
+
     bool desiredPusr, desiredPpdr;
 
     switch (resistor) {
         case ARM_GPIO_PULL_UP:
-            pioPort->PIO_PUER |= pin_mask;  // Enable pull-up
+            pioPort->PIO_PUER |= pinMask;  // Enable pull-up
             desiredPpdr = false;
             desiredPusr = true;
             break;
 
         case ARM_GPIO_PULL_DOWN:
-            pioPort->PIO_PPDER |= pin_mask;  // Enable pull-down
+            pioPort->PIO_PPDER |= pinMask;  // Enable pull-down
             desiredPpdr = true;
             desiredPusr = false;
             break;
 
         case ARM_GPIO_PULL_NONE:
-            pioPort->PIO_PPDER &= ~pin_mask;  // Disable pull-down
-            pioPort->PIO_PUER &= ~pin_mask;   // Disable pull-up
+            pioPort->PIO_PPDER &= ~pinMask;  // Disable pull-down
+            pioPort->PIO_PUER &= ~pinMask;   // Disable pull-up
             break;
 
         default:
-            return ARM_DRIVER_ERROR_PARAMETER;
+            result = ARM_DRIVER_ERROR_PARAMETER;
     }
 
-    /* CHECK(SET_WRITE_PROTECTION(pin, true) == ARM_DRIVER_OK, return ARM_DRIVER_ERROR); */
+    SET_WRITE_PROTECTION(pin, true);
 
-    bool pusr, ppdr;
-    pusr = (pioPort->PIO_PUSR & pin_mask) == 1 ? true : false;
-    ppdr = (pioPort->PIO_PPDSR & pin_mask) == 1 ? true : false;
-    CHECK(pusr == desiredPusr, return ARM_DRIVER_ERROR);
-    CHECK(ppdr == desiredPpdr, return ARM_DRIVER_ERROR);
+    if (result == ARM_DRIVER_OK) {
+        bool pusr, ppdr;
+        pusr = (pioPort->PIO_PUSR & pinMask) == 1 ? true : false;
+        ppdr = (pioPort->PIO_PPDSR & pinMask) == 1 ? true : false;
+        CHECK(pusr == desiredPusr, return ARM_DRIVER_ERROR);
+        CHECK(ppdr == desiredPpdr, return ARM_DRIVER_ERROR);
+    }
 
-    return ARM_DRIVER_OK;
+    return result;
 }
 
 // Set GPIO Event Trigger
@@ -230,54 +229,48 @@ static int32_t GPIO_SetEventTrigger(ARM_GPIO_Pin_t pin, ARM_GPIO_EVENT_TRIGGER t
     CHECK(IS_PIN_AVAILABLE(pin), return ARM_GPIO_ERROR_PIN);
 
     uint32_t port = PIN_TO_PORT(pin);
-    uint32_t pin_mask = PIN_MASK(pin);
+    uint32_t pinMask = PIN_MASK(pin);
     volatile pio_registers_t* pioPort = (pio_registers_t*)port;
 
     // Disable write protection
-    /* uint32_t result = SET_WRITE_PROTECTION(pin, false); */
-    /* CHECK(result = ARM_DRIVER_OK, return result); */
+    SET_WRITE_PROTECTION(pin, false);
+    uint32_t result = ARM_DRIVER_OK;
 
-    // First, disable any existing interrupt configuration
-    pioPort->PIO_IDR = pin_mask;  // Disable interrupt
+    // NOTE this level of specificity is probably not neccessary but plays it the most safe
+    // Reset all event trigger settings first (applies for all cases)
+    pioPort->PIO_AIMER &= ~pinMask;   // Disable Additional Interrupt modes
+    pioPort->PIO_AIMDR |= pinMask;    // Explicitly disable via AIMDR
+    pioPort->PIO_IDR |= pinMask;      // Disable interrupts
+    pioPort->PIO_IER &= ~pinMask;     // Ensure interrupt enable register does not keep it enabled
+    pioPort->PIO_ESR &= ~pinMask;     // Disable Edge detection
+    pioPort->PIO_REHLSR &= ~pinMask;  // Disable Rising edge detection
+    pioPort->PIO_FELLSR &= ~pinMask;  // Disable Falling edge detection
 
-    if (trigger == ARM_GPIO_TRIGGER_NONE) {
-        pioPort->PIO_AIMDR = pin_mask;  // Disable Additional Interrupt modes
-        // Re-enable write protection
-        CHECK(SET_WRITE_PROTECTION(pin, true) == ARM_DRIVER_OK, return ARM_DRIVER_ERROR);
-        return ARM_DRIVER_OK;
+    if (trigger != ARM_GPIO_TRIGGER_NONE) {
+        // Enable required settings for edge triggered interrupts
+        pioPort->PIO_AIMER |= pinMask;   // Enable Additional Interrupt modes
+        pioPort->PIO_AIMDR &= ~pinMask;  // Disable AIMDR
+        pioPort->PIO_IDR &= ~pinMask;    // Enable interrupt (clear disable)
+        pioPort->PIO_IER |= pinMask;     // Enable interrupt
+
+        // Enable Edge detection
+        pioPort->PIO_ESR |= pinMask;
+
+        if (trigger == ARM_GPIO_TRIGGER_RISING_EDGE) {
+            pioPort->PIO_REHLSR |= pinMask;  // Enable Rising edge
+        } else if (trigger == ARM_GPIO_TRIGGER_FALLING_EDGE) {
+            pioPort->PIO_FELLSR |= pinMask;  // Enable Falling edge
+        } else if (trigger == ARM_GPIO_TRIGGER_EITHER_EDGE) {
+            pioPort->PIO_REHLSR |= pinMask;  // Enable Rising edge
+            pioPort->PIO_FELLSR |= pinMask;  // Enable Falling edge
+        } else {
+            result = ARM_DRIVER_ERROR_PARAMETER;
+        }
     }
 
-    // Enable Additional Interrupt modes
-    pioPort->PIO_AIMER = pin_mask;
-    pioPort->PIO_ESR = pin_mask;  // Enable Edge detection
+    SET_WRITE_PROTECTION(pin, true);
 
-    switch (trigger) {
-        case ARM_GPIO_TRIGGER_RISING_EDGE:
-            pioPort->PIO_REHLSR |= pin_mask;  // Select Rising edge
-            break;
-
-        case ARM_GPIO_TRIGGER_FALLING_EDGE:
-            pioPort->PIO_FELLSR |= pin_mask;  // Select Falling edge
-            break;
-
-        case ARM_GPIO_TRIGGER_EITHER_EDGE:
-            // Configure both edges
-            pioPort->PIO_REHLSR |= pin_mask;  // Enable Rising edge
-            pioPort->PIO_FELLSR |= pin_mask;  // Enable Falling edge
-            break;
-
-        default:
-            // Re-enable write protection
-            return ARM_DRIVER_ERROR_PARAMETER;
-    }
-
-    // Enable interrupt if trigger is not NONE
-    pioPort->PIO_IER |= pin_mask;
-
-    // Re-enable write protection
-    /* CHECK(SET_WRITE_PROTECTION(pin, true) == ARM_DRIVER_OK, return ARM_DRIVER_ERROR); */
-
-    return ARM_DRIVER_OK;
+    return result;
 }
 
 // Set GPIO Output Level
@@ -285,13 +278,13 @@ static void GPIO_SetOutput(ARM_GPIO_Pin_t pin, uint32_t val) {
     CHECK(IS_PIN_AVAILABLE(pin), return);
 
     uint32_t port = PIN_TO_PORT(pin);
-    uint32_t pin_mask = PIN_MASK(pin);
+    uint32_t pinMask = PIN_MASK(pin);
     volatile pio_registers_t* pioPort = (pio_registers_t*)port;
 
     if (val) {
-        pioPort->PIO_SODR |= pin_mask;
+        pioPort->PIO_SODR |= pinMask;
     } else {
-        pioPort->PIO_CODR |= pin_mask;
+        pioPort->PIO_CODR |= pinMask;
     }
     // NOTE alternatively we could use the output data status register however that provides
     // blanket writes to each pin which is less effective in this case
@@ -302,10 +295,10 @@ static void GPIO_SetOutput(ARM_GPIO_Pin_t pin, uint32_t val) {
 static uint32_t GPIO_GetInput(ARM_GPIO_Pin_t pin) {
     CHECK(IS_PIN_AVAILABLE(pin), return);
     uint32_t port = PIN_TO_PORT(pin);
-    uint32_t pin_mask = PIN_MASK(pin);
+    uint32_t pinMask = PIN_MASK(pin);
     volatile pio_registers_t* pioPort = (pio_registers_t*)port;
 
-    return (pioPort->PIO_PDSR & pin_mask) ? 1U : 0U;
+    return (pioPort->PIO_PDSR & pinMask) ? 1U : 0U;
 }
 
 // GPIO Driver access structure
