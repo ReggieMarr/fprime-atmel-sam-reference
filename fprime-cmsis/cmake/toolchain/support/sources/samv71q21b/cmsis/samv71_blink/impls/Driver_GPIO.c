@@ -22,6 +22,7 @@
 #include "sam.h"
 /* #include "peripheral/pio/plib_pio.h" */
 #include "pioConfig.h"
+#include "samv71_bsp_cfg.h"
 
 // Pin mapping
 #define WRITE_PROTECTION_PASSWORD 0x50494F
@@ -58,41 +59,38 @@ static inline bool IS_PIN_AVAILABLE(ARM_GPIO_Pin_t pin) {
 }
 
 static int32_t SET_WRITE_PROTECTION(ARM_GPIO_Pin_t pin, bool enableWriteProtection) {
-    CHECK(IS_PIN_AVAILABLE(pin), return ARM_GPIO_ERROR_PIN)
-
-    uint32_t port = PIN_TO_PORT(pin);
     uint32_t mask = PIO_WPMR_WPKEY_PASSWD;
     if (enableWriteProtection) {
         mask |= PIO_WPMR_WPEN_Msk;
     }
-    volatile pio_registers_t* pioPort = (pio_registers_t*)port;
+    volatile pio_registers_t* pioPort = (pio_registers_t*)PIN_TO_PORT(pin);
     pioPort->PIO_WPMR = mask;
 
     return ARM_DRIVER_OK;
 }
 
-static int32_t GET_WRITE_PROTECTION_STATUS(ARM_GPIO_Pin_t pin, bool* writeProtectionStatus) {
-    CHECK(IS_PIN_AVAILABLE(pin), return ARM_GPIO_ERROR_PIN)
-    CHECK(writeProtectionStatus, return ARM_GPIO_ERROR);
-
+static bool GET_WRITE_PROTECTION_STATUS(ARM_GPIO_Pin_t pin) {
     uint32_t port = PIN_TO_PORT(pin);
     volatile pio_registers_t* pioPort = (pio_registers_t*)port;
     uint32_t registerVal = pioPort->PIO_WPSR;
     // NOTE bits 8-23 stores the register at which an invalid write attempt has last occured
 
     // The last bit is all we care about here
-    *writeProtectionStatus = registerVal & 0b1;
-
-    return ARM_DRIVER_OK;
+    return registerVal & 0b1;
 }
 
 // Setup GPIO Interface
 static int32_t GPIO_Setup(ARM_GPIO_Pin_t pin, ARM_GPIO_SignalEvent_t cb_event) {
     CHECK(IS_PIN_AVAILABLE(pin), return ARM_GPIO_ERROR_PIN)
 
-    /* NOTE The PIO_Initialize() should have been called during system initialization */
-    /* No need to call it here as it would reset all pin configurations, however we */
-    /* should check the status */
+    // Enable the pin's peripheral clock
+    enablePinPeriphClock(pin);
+
+    uint32_t port = PIN_TO_PORT(pin);
+    uint32_t pin_mask = PIN_MASK(pin);
+    volatile pio_registers_t* pioPort = (pio_registers_t*)port;
+    pioPort->PIO_PER |= pin_mask;  // Enable PIO control for our pin
+    pioPort->PIO_PDR &= ~pin_mask;
 
     gpio_cb_event = cb_event;
 

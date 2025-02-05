@@ -10,6 +10,10 @@ extern "C" {
 
 void initPio(const pioGPIOConfig_t* configs, uint32_t numConfigs);
 void applyPinCfgToPortCfg(pioGPIOConfig_t const* cfg, uint32_t const pinMask, pio_registers_t* port);
+
+// Determines the port associated with the provided pin id and enables its peripheral clock
+void enablePinPeriphClock(ARM_GPIO_Pin_t pinId);
+
 #ifdef __cplusplus
 }
 #endif

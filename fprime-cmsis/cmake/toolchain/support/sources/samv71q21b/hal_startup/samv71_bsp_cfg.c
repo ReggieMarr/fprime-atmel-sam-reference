@@ -218,6 +218,31 @@ void applyPinCfgToPortCfg(pioGPIOConfig_t const* cfg, uint32_t const pinMask, pi
     }
 }
 
+// Provides the mapping from the port representation as an index to an ID
+static int portIdxToId(uint32_t const portIdx) {
+    switch (portIdx) {
+        case PORT_A:
+            return ID_PIOA;
+        case PORT_B:
+            return ID_PIOB;
+        case PORT_C:
+            return ID_PIOC;
+        case PORT_D:
+            return ID_PIOD;
+        case PORT_E:
+            return ID_PIOE;
+        default:
+            return -1;
+    }
+}
+
+void enablePinPeriphClock(ARM_GPIO_Pin_t pinId) {
+    uint32_t portIdx = PORT_TO_IDX(PIN_TO_PORT(pinId));
+
+    /* Enable Peripheral Clocks for the relevant PIO Controller */
+    PMC_REGS->PMC_PCER0 |= (1 << portIdxToId(portIdx));
+}
+
 void initPio(const pioGPIOConfig_t* configs, uint32_t numConfigs) {
     // Create a local copy of the default register set to modify
     pio_registers_t pio_registers[ARRAY_SIZE(DEFAULT_PIO_REGISTERS)];
@@ -227,46 +252,13 @@ void initPio(const pioGPIOConfig_t* configs, uint32_t numConfigs) {
         setPioPortConfigVal(&pio_registers[i], &DEFAULT_PIO_REGISTERS[i]);
     }
 
-    /* Clear & Configure System IO Pins */
-    MATRIX_REGS->CCFG_SYSIO = 0;
-    MATRIX_REGS->CCFG_SYSIO |= (1 << 4);  // Enables PB4 as a regular GPIO instead of a system function
-    PMC_REGS->PMC_PCER0 = 0;
-
     // Apply each pin-specific configuration
     for (uint32_t i = 0; i < numConfigs; i++) {
         const pioGPIOConfig_t* cfg = &configs[i];
-        ARM_PORT_ID pinId = cfg->pinId;
-        uint32_t portIdx = PORT_TO_IDX(PIN_TO_PORT(pinId));
-
-        uint32_t portId = 0;
-        switch (portIdx) {
-            case PORT_A:
-                portId = ID_PIOA;
-                break;
-            case PORT_B:
-                portId = ID_PIOB;
-                break;
-            case PORT_C:
-                portId = ID_PIOC;
-                break;
-            case PORT_D:
-                portId = ID_PIOD;
-                break;
-            case PORT_E:
-                portId = ID_PIOE;
-                break;
-            default:
-                // NOTE we need to figure some way to notify that this error has occured
-                // for now we'll just skip it
-                continue;
-                break;
-        }
-
-        /* Enable Peripheral Clocks for the relevant PIO Controller */
-        PMC_REGS->PMC_PCER0 |= (1 << portId);
+        enablePinPeriphClock(cfg->pinId);
 
         // Get pointer to the port configuration
-        applyPinCfgToPortCfg(cfg, PIN_MASK(pinId), &pio_registers[portIdx]);
+        applyPinCfgToPortCfg(cfg, PIN_MASK(cfg->pinId), &pio_registers[PORT_TO_IDX(PIN_TO_PORT(cfg->pinId))]);
     }
 
     // Apply changes to hardware

@@ -82,6 +82,11 @@ void _on_bootstrap(void) {
     /* Initialize Embedded Flash Controller */
     EFC_Initialize();
 
+    /* Clear & Configure System IO Pins */
+    MATRIX_REGS->CCFG_SYSIO = 0;
+    MATRIX_REGS->CCFG_SYSIO |= (1 << 4);  // Enables PB4 as a regular GPIO instead of a system function
+    PMC_REGS->PMC_PCER0 = 0;
+
     /* Initialize PIO with pin configurations */
     initPio(gpioConfigs, GPIO_MAX_NUM);
 
@@ -115,6 +120,9 @@ typedef struct {
 void blink_led(void* argument) {
     blinkArg_t* args = (blinkArg_t*)argument;
     size_t dfltTickDelay = 50000;
+    // NOTE not shown to be able to override previous settings yet
+    /* gpioDrv->SetDirection(LED0_PIN, ARM_GPIO_OUTPUT); */
+    /* gpioDrv->SetDirection(LED1_PIN, ARM_GPIO_OUTPUT); */
 
     // Set everything off
     gpioDrv->SetOutput(LED_PIN_0, GPIO_LOW);
