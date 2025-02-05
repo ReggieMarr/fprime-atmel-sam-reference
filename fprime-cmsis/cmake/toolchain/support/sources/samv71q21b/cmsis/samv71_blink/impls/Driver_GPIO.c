@@ -111,8 +111,8 @@ static int32_t GPIO_SetDirection(ARM_GPIO_Pin_t pin, ARM_GPIO_DIRECTION directio
     CHECK(IS_PIN_AVAILABLE(pin), return ARM_GPIO_ERROR_PIN)
     int32_t result = ARM_DRIVER_OK;
 
-    result = SET_WRITE_PROTECTION(pin, false);
-    CHECK(result = ARM_DRIVER_OK, return result);
+    /* result = SET_WRITE_PROTECTION(pin, false); */
+    /* CHECK(result = ARM_DRIVER_OK, return result); */
 
     uint32_t port = PIN_TO_PORT(pin);
     uint32_t pin_mask = PIN_MASK(pin);
@@ -134,7 +134,7 @@ static int32_t GPIO_SetDirection(ARM_GPIO_Pin_t pin, ARM_GPIO_DIRECTION directio
             break;
     }
 
-    CHECK(SET_WRITE_PROTECTION(pin, true) == ARM_DRIVER_OK, return ARM_DRIVER_ERROR);
+    /* CHECK(SET_WRITE_PROTECTION(pin, true) == ARM_DRIVER_OK, return ARM_DRIVER_ERROR); */
 
     ARM_GPIO_DIRECTION directionStatus = GetDirection(pin);
     CHECK(directionStatus == direction, return ARM_DRIVER_ERROR);
@@ -153,8 +153,9 @@ static int32_t GPIO_SetOutputMode(ARM_GPIO_Pin_t pin, ARM_GPIO_OUTPUT_MODE mode)
     ARM_GPIO_DIRECTION directionStatus = GetDirection(pin);
     CHECK(directionStatus == ARM_GPIO_OUTPUT, return ARM_DRIVER_ERROR);
 
-    uint32_t result = SET_WRITE_PROTECTION(pin, false);
-    CHECK(result = ARM_DRIVER_OK, return result);
+    /* uint32_t result = SET_WRITE_PROTECTION(pin, false); */
+    /* CHECK(result = ARM_DRIVER_OK, return result); */
+    uint32_t result = ARM_DRIVER_OK;
 
     // Open-drain is controlled by the multi-driver registers
     // so to support open-drain mode we enable it
@@ -171,7 +172,7 @@ static int32_t GPIO_SetOutputMode(ARM_GPIO_Pin_t pin, ARM_GPIO_OUTPUT_MODE mode)
             result = ARM_DRIVER_ERROR_PARAMETER;
     }
 
-    CHECK(SET_WRITE_PROTECTION(pin, true) == ARM_DRIVER_OK, return ARM_DRIVER_ERROR);
+    /* CHECK(SET_WRITE_PROTECTION(pin, true) == ARM_DRIVER_OK, return ARM_DRIVER_ERROR); */
 
     return result;
 }
@@ -186,8 +187,8 @@ static int32_t GPIO_SetPullResistor(ARM_GPIO_Pin_t pin, ARM_GPIO_PULL_RESISTOR r
     uint32_t pin_mask = PIN_MASK(pin);
     volatile pio_registers_t* pioPort = (pio_registers_t*)port;
 
-    uint32_t result = SET_WRITE_PROTECTION(pin, false);
-    CHECK(result = ARM_DRIVER_OK, return result);
+    /* uint32_t result = SET_WRITE_PROTECTION(pin, false); */
+    /* CHECK(result = ARM_DRIVER_OK, return result); */
     bool desiredPusr, desiredPpdr;
 
     switch (resistor) {
@@ -209,10 +210,10 @@ static int32_t GPIO_SetPullResistor(ARM_GPIO_Pin_t pin, ARM_GPIO_PULL_RESISTOR r
             break;
 
         default:
-            result = ARM_DRIVER_ERROR_PARAMETER;
+            return ARM_DRIVER_ERROR_PARAMETER;
     }
 
-    CHECK(SET_WRITE_PROTECTION(pin, true) == ARM_DRIVER_OK, return ARM_DRIVER_ERROR);
+    /* CHECK(SET_WRITE_PROTECTION(pin, true) == ARM_DRIVER_OK, return ARM_DRIVER_ERROR); */
 
     bool pusr, ppdr;
     pusr = (pioPort->PIO_PUSR & pin_mask) == 1 ? true : false;
@@ -233,8 +234,8 @@ static int32_t GPIO_SetEventTrigger(ARM_GPIO_Pin_t pin, ARM_GPIO_EVENT_TRIGGER t
     volatile pio_registers_t* pioPort = (pio_registers_t*)port;
 
     // Disable write protection
-    uint32_t result = SET_WRITE_PROTECTION(pin, false);
-    CHECK(result = ARM_DRIVER_OK, return result);
+    /* uint32_t result = SET_WRITE_PROTECTION(pin, false); */
+    /* CHECK(result = ARM_DRIVER_OK, return result); */
 
     // First, disable any existing interrupt configuration
     pioPort->PIO_IDR = pin_mask;  // Disable interrupt
@@ -267,14 +268,14 @@ static int32_t GPIO_SetEventTrigger(ARM_GPIO_Pin_t pin, ARM_GPIO_EVENT_TRIGGER t
 
         default:
             // Re-enable write protection
-            result = ARM_DRIVER_ERROR_PARAMETER;
+            return ARM_DRIVER_ERROR_PARAMETER;
     }
 
     // Enable interrupt if trigger is not NONE
     pioPort->PIO_IER |= pin_mask;
 
     // Re-enable write protection
-    CHECK(SET_WRITE_PROTECTION(pin, true) == ARM_DRIVER_OK, return ARM_DRIVER_ERROR);
+    /* CHECK(SET_WRITE_PROTECTION(pin, true) == ARM_DRIVER_OK, return ARM_DRIVER_ERROR); */
 
     return ARM_DRIVER_OK;
 }

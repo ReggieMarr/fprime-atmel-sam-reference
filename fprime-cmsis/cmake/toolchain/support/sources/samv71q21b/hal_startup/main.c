@@ -21,53 +21,7 @@ static ARM_DRIVER_USART* usartDrv = &Driver_USART0;
 extern ARM_DRIVER_GPIO Driver_GPIO;
 static ARM_DRIVER_GPIO* gpioDrv = &Driver_GPIO;
 
-typedef enum {
-    GPIO_LED_0 = 0,
-    GPIO_LED_1,
-    GPIO_MAX_NUM,
-} SAM_GPIOS_t;
-
-static const uint32_t LED_PIN_0 = PIN_PA23;
-static const uint32_t LED_PIN_1 = PIN_PC9;
-
-static pioGPIOConfig_t gpioConfigs[GPIO_MAX_NUM] = {
-    [GPIO_LED_0] =
-        {
-            .pinId = LED_PIN_0,
-            .direction = ARM_GPIO_OUTPUT,
-            .isOpenDrain = false,
-            .isHighOnStart = true,
-            .base =
-                {
-                    .pullResistor = ARM_GPIO_PULL_NONE,
-                    .functionalType = PIO_FUNC_GPIO,
-                    .driveStrength = 0,
-                },
-            .irqConfig =
-                {
-                    .trigger = ARM_GPIO_TRIGGER_NONE,
-                },
-
-        },
-    [GPIO_LED_1] =
-        {
-            .pinId = LED_PIN_1,
-            .direction = ARM_GPIO_OUTPUT,
-            .isOpenDrain = false,
-            .isHighOnStart = false,
-            .base =
-                {
-                    .pullResistor = ARM_GPIO_PULL_NONE,
-                    .functionalType = PIO_FUNC_GPIO,
-                    .driveStrength = 0,
-                },
-            .irqConfig =
-                {
-                    .trigger = ARM_GPIO_TRIGGER_NONE,
-                },
-
-        },
-};
+static const uint32_t LEDS[] = {PIN_PA23, PIN_PC9};
 
 // Pre-Main startup bootstrap
 void _on_bootstrap(void) {
@@ -85,10 +39,15 @@ void _on_bootstrap(void) {
     /* Clear & Configure System IO Pins */
     MATRIX_REGS->CCFG_SYSIO = 0;
     MATRIX_REGS->CCFG_SYSIO |= (1 << 4);  // Enables PB4 as a regular GPIO instead of a system function
+
+    // Disable peripheral clocks by default
     PMC_REGS->PMC_PCER0 = 0;
 
     /* Initialize PIO with pin configurations */
-    initPio(gpioConfigs, GPIO_MAX_NUM);
+    // NOTE we now simply use the Driver_GPIO interface for this
+    // however it may still be desired in other cases to set the port registers to
+    // some default values
+    /* initPio(gpioConfigs, 0); */
 
     /* Initialize Clocks */
     CLOCK_Initialize();
@@ -120,34 +79,43 @@ typedef struct {
 void blink_led(void* argument) {
     blinkArg_t* args = (blinkArg_t*)argument;
     size_t dfltTickDelay = 50000;
-    // NOTE not shown to be able to override previous settings yet
-    /* gpioDrv->SetDirection(LED0_PIN, ARM_GPIO_OUTPUT); */
-    /* gpioDrv->SetDirection(LED1_PIN, ARM_GPIO_OUTPUT); */
+
+    gpioDrv->Setup(LEDS[0], NULL);
+    gpioDrv->SetDirection(LEDS[0], ARM_GPIO_OUTPUT);
+    gpioDrv->SetOutputMode(LEDS[0], ARM_GPIO_PUSH_PULL);
+    gpioDrv->SetEventTrigger(LEDS[0], ARM_GPIO_TRIGGER_NONE);
+    gpioDrv->SetPullResistor(LEDS[0], ARM_GPIO_PULL_NONE);
+
+    gpioDrv->Setup(LEDS[1], NULL);
+    gpioDrv->SetDirection(LEDS[1], ARM_GPIO_OUTPUT);
+    gpioDrv->SetOutputMode(LEDS[1], ARM_GPIO_PUSH_PULL);
+    gpioDrv->SetEventTrigger(LEDS[1], ARM_GPIO_TRIGGER_NONE);
+    gpioDrv->SetPullResistor(LEDS[1], ARM_GPIO_PULL_NONE);
 
     // Set everything off
-    gpioDrv->SetOutput(LED_PIN_0, GPIO_LOW);
-    gpioDrv->SetOutput(LED_PIN_1, GPIO_LOW);
+    gpioDrv->SetOutput(LEDS[0], GPIO_LOW);
+    gpioDrv->SetOutput(LEDS[1], GPIO_LOW);
     osDelay(dfltTickDelay);
 
     // Set everything on
-    gpioDrv->SetOutput(LED_PIN_0, GPIO_HIGH);
-    gpioDrv->SetOutput(LED_PIN_1, GPIO_HIGH);
+    gpioDrv->SetOutput(LEDS[0], GPIO_HIGH);
+    gpioDrv->SetOutput(LEDS[1], GPIO_HIGH);
 
     osDelay(dfltTickDelay);
 
-    gpioDrv->SetOutput(LED_PIN_0, GPIO_LOW);
-    gpioDrv->SetOutput(LED_PIN_1, GPIO_HIGH);
+    gpioDrv->SetOutput(LEDS[0], GPIO_LOW);
+    gpioDrv->SetOutput(LEDS[1], GPIO_HIGH);
 
     osDelay(dfltTickDelay);
 
     // Toggle LEDs
     while (true) {
-        gpioDrv->SetOutput(LED_PIN_0, GPIO_HIGH);
-        gpioDrv->SetOutput(LED_PIN_1, GPIO_LOW);
+        gpioDrv->SetOutput(LEDS[0], GPIO_HIGH);
+        gpioDrv->SetOutput(LEDS[1], GPIO_LOW);
         osDelay(args->tickDelay);
 
-        gpioDrv->SetOutput(LED_PIN_0, GPIO_LOW);
-        gpioDrv->SetOutput(LED_PIN_1, GPIO_HIGH);
+        gpioDrv->SetOutput(LEDS[0], GPIO_LOW);
+        gpioDrv->SetOutput(LEDS[1], GPIO_HIGH);
         osDelay(args->tickDelay);
     }
 }
