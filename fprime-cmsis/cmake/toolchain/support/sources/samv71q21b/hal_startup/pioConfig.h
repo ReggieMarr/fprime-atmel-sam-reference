@@ -1,6 +1,7 @@
 #ifndef PIO_CONFIG_H_
 #define PIO_CONFIG_H_
 
+#include <stdint.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -30,26 +31,32 @@ typedef struct {
     pioPinFunction_t functionalType;      // Basic pin function selection
 } pioBaseConfig_t;
 
+typedef uint32_t ARM_PORT_ID;
+
 // GPIO specific configuration
 typedef struct {
-    pioBaseConfig_t genCfg;
+    ARM_PORT_ID pinId;
+    pioBaseConfig_t base;
     ARM_GPIO_DIRECTION direction;  // PIO_OER/ODR
-    bool outputWriteEnabled;       // PIO_OWER
-    uint32_t initialState;         // PIO_ODSR initial value
+    bool isHighOnStart;            // PIO_ODSR initial value
     bool isOpenDrain;              // PIO_MDER/MDDR (multi-drive)
     // Optional interrupt configuration
     pioInterruptConfig_t irqConfig;
 } pioGPIOConfig_t;
 
+#define GPIO_HIGH (1)
+#define GPIO_LOW (0)
+
 // NOTE this header is meant to be generic to SAMV71's but the PIN_PE5 is specific to samv71q21b
 // TODO find another way to determine the max pin number
 #define MAX_PIO_PIN 134U  // PE5 is the highest pin number (133)
 #define PIN_IS_AVAILABLE(n) ((n) < MAX_PIO_PIN && (n) != PIO_PIN_NONE)
+#define PIO_PIN_NONE (-1)
 
 // The pin argument provided will be some value between 0-133 where each group of 32 pins maps to a port
 // (with the exception of the final port, PORTE, which only has 5 pins)
 // by shifting the pin argument by 5 we get some value between 0-4 which maps to ports A-E
-#define PIN_TO_PORT(pin) (PIO_PORT)(PIOA_BASE_ADDRESS + (0x200U * (pin >> 5)))
+#define PIN_TO_PORT(pin) (PIOA_BASE_ADDRESS + (0x200U * (pin >> 5)))
 #define PORT_TO_IDX(port) ((port - PIOA_BASE_ADDRESS) / 0x200U)
 #define PORT_A PORT_TO_IDX(PIOA_BASE_ADDRESS)
 #define PORT_B PORT_TO_IDX(PIOB_BASE_ADDRESS)
@@ -59,6 +66,13 @@ typedef struct {
 // by masking the lower byte with 0x1F we get some value between 0-31 which maps to the pin number within the port
 // This is then shifted to the left by 1 to get the bit mask for the pin
 #define PIN_MASK(pin) (0x1UL << (pin & 0x1FU))
+
+/* #define LED0_PIN PIO_PA23 */
+#define LED0_PIN PIN_MASK(PIN_PA23)
+#define LED_PIO PIOA_REGS
+/* #define LED1_PIN PIO_PC9 */
+#define LED1_PIN PIN_MASK(PIN_PC9)
+#define LED1_PIO PIOC_REGS
 
 #ifdef __cplusplus
 }

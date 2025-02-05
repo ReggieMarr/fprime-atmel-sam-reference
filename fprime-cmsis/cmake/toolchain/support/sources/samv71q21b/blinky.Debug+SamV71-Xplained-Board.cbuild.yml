@@ -367,8 +367,6 @@ build:
       files:
         - file: harmony/sam_v71_xult/peripheral/clk/plib_clk.c
           category: sourceC
-        - file: harmony/sam_v71_xult/peripheral/pio/plib_pio.c
-          category: sourceC
         - file: harmony/sam_v71_xult/peripheral/nvic/plib_nvic.c
           category: sourceC
         - file: harmony/sam_v71_xult/peripheral/twihs/master/plib_twihs0_master.c
@@ -415,6 +413,8 @@ build:
         - harmony/sam_v71_xult
       files:
         - file: hal_startup/main.c
+          category: sourceC
+        - file: hal_startup/samv71_bsp_cfg.c
           category: sourceC
   constructed-files:
     - file: RTE/_Debug_SamV71-Xplained-Board/RTE_Components.h

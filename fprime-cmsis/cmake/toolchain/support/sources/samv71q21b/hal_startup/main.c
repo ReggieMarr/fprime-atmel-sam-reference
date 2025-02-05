@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include "Driver_GPIO.h"
 #include "Driver_I2C.h"
 #include "Driver_USART.h"
@@ -6,7 +7,10 @@
 #include "hal_defs.h"
 #include "os_tick.h"
 #include "peripheral/clk/plib_clk.h"
+#include "pioConfig.h"
 #include "sam.h"
+#include "samv71_bsp_cfg.h"
+#include "samv71q21b.h"
 
 extern ARM_DRIVER_I2C Driver_I2C0;
 static ARM_DRIVER_I2C* I2Cdrv = &Driver_I2C0;
@@ -14,69 +18,92 @@ static ARM_DRIVER_I2C* I2Cdrv = &Driver_I2C0;
 extern ARM_DRIVER_USART Driver_USART0;
 static ARM_DRIVER_USART* usartDrv = &Driver_USART0;
 
-#define LED0_PIN PIO_PA23
-#define LED_PIO PIOA_REGS
-#define LED1_PIN PIO_PC9
-#define LED1_PIO PIOC_REGS
+extern ARM_DRIVER_GPIO Driver_GPIO;
+static ARM_DRIVER_GPIO* gpioDrv = &Driver_GPIO;
 
-static void setupLeds(void) {
-    // Enable clocks for GPIO
-    PMC_REGS->PMC_PCER0 = (1 << ID_PIOA) | (1 << ID_PIOC);
+typedef enum {
+    GPIO_LED_0 = 0,
+    GPIO_LED_1,
+    GPIO_MAX_NUM,
+} SAM_GPIOS_t;
 
-    // Configure LED0
-    // Enable PIO control (as opposed to peripheral control)
-    LED_PIO->PIO_PER = LED0_PIN;
-    // Configure as output
-    LED_PIO->PIO_OER = LED0_PIN;
-    // Disable internal pull-up
-    LED_PIO->PIO_PUDR = LED0_PIN;
-    // Set high (LED off)
-    LED_PIO->PIO_SODR = LED0_PIN;
+static const uint32_t LED_PIN_0 = PIN_PA23;
+static const uint32_t LED_PIN_1 = PIN_PC9;
 
-    // Configure LED1
-    // Enable PIO control
-    LED1_PIO->PIO_PER = LED1_PIN;
-    // Configure as output
-    LED1_PIO->PIO_OER = LED1_PIN;
-    // Disable pull-up
-    LED1_PIO->PIO_PUDR = LED1_PIN;
-    // Set high (LED off)
-    LED1_PIO->PIO_SODR = LED1_PIN;
-}
+static pioGPIOConfig_t gpioConfigs[GPIO_MAX_NUM] = {
+    [GPIO_LED_0] =
+        {
+            .pinId = LED_PIN_0,
+            .direction = ARM_GPIO_OUTPUT,
+            .isOpenDrain = false,
+            .isHighOnStart = true,
+            .base =
+                {
+                    .pullResistor = ARM_GPIO_PULL_NONE,
+                    .functionalType = PIO_FUNC_GPIO,
+                    .driveStrength = 0,
+                },
+            .irqConfig =
+                {
+                    .trigger = ARM_GPIO_TRIGGER_NONE,
+                },
+
+        },
+    [GPIO_LED_1] =
+        {
+            .pinId = LED_PIN_1,
+            .direction = ARM_GPIO_OUTPUT,
+            .isOpenDrain = false,
+            .isHighOnStart = false,
+            .base =
+                {
+                    .pullResistor = ARM_GPIO_PULL_NONE,
+                    .functionalType = PIO_FUNC_GPIO,
+                    .driveStrength = 0,
+                },
+            .irqConfig =
+                {
+                    .trigger = ARM_GPIO_TRIGGER_NONE,
+                },
+
+        },
+};
 
 // Pre-Main startup bootstrap
 void _on_bootstrap(void) {
     /* Initialize the SAM system */
+
     /* Enable ICache (CMSIS-Core API) */
     SCB_EnableICache();
 
-    /* Enable DCache (CMSIS-Core API)*/
+    /* Enable DCache (CMSIS-Core API) */
     SCB_EnableDCache();
 
+    /* Initialize Embedded Flash Controller */
     EFC_Initialize();
 
+    /* Initialize PIO with pin configurations */
+    initPio(gpioConfigs, GPIO_MAX_NUM);
+
+    /* Initialize Clocks */
     CLOCK_Initialize();
-    PIO_Initialize();
 
-    RSWDT_REGS->RSWDT_MR = RSWDT_MR_WDDIS_Msk;  // Disable RSWDT
-    WDT_REGS->WDT_MR = WDT_MR_WDDIS_Msk;        // Disable WDT
+    /* Disable Watchdog Timers */
+    RSWDT_REGS->RSWDT_MR = RSWDT_MR_WDDIS_Msk;  // Disable Reinforced Watchdog Timer
+    WDT_REGS->WDT_MR = WDT_MR_WDDIS_Msk;        // Disable Standard Watchdog Timer
 
+    /* Initialize Communication Peripherals */
     TWIHS0_Initialize();
     USART1_Initialize();
 
-    /* NOTE could pass a user defined signal event handler here */
+    /* Initialize Peripheral Drivers */
     I2Cdrv->Initialize(NULL);
-
     usartDrv->Initialize(NULL);
 
-    /* Nested vector interupt controller
-     * Enable the interrupt sources and configure the priorities as configured
-     * from within the "Interrupt Manager" of MHC. */
+    /* Configure Nested Vector Interrupt Controller (NVIC) */
     NVIC_Initialize();
 
-    /* NOTE should call GPIO_Setup for relevant io's here */
-    setupLeds();
-
+    /* System Clock Update */
     SystemCoreClockUpdate();
 }
 
@@ -87,42 +114,32 @@ typedef struct {
 
 void blink_led(void* argument) {
     blinkArg_t* args = (blinkArg_t*)argument;
-    volatile pio_registers_t* ledReg = NULL;
-    volatile uint32_t ledPin;
     size_t dfltTickDelay = 50000;
-    // Off
-    LED1_PIO->PIO_CODR = LED1_PIN;
-    LED_PIO->PIO_CODR = LED0_PIN;
-    osDelay(dfltTickDelay / 2);
-    LED1_PIO->PIO_SODR = LED1_PIN;
-    LED_PIO->PIO_SODR = LED0_PIN;
 
-    LED1_PIO->PIO_CODR = LED1_PIN;
-    /* LED_PIO->PIO_CODR = LED0_PIN; */
+    // Set everything off
+    gpioDrv->SetOutput(LED_PIN_0, GPIO_LOW);
+    gpioDrv->SetOutput(LED_PIN_1, GPIO_LOW);
     osDelay(dfltTickDelay);
 
-    // Off
-    LED1_PIO->PIO_SODR = LED1_PIN;
-    /* LED_PIO->PIO_SODR = LED0_PIN; */
+    // Set everything on
+    gpioDrv->SetOutput(LED_PIN_0, GPIO_HIGH);
+    gpioDrv->SetOutput(LED_PIN_1, GPIO_HIGH);
 
     osDelay(dfltTickDelay);
 
-    if (args->idx == 0) {
-        ledReg = LED_PIO;
-        ledPin = LED0_PIN;
-    } else if (args->idx == 1) {
-        ledReg = LED1_PIO;
-        ledPin = LED1_PIN;
-    } else if (args->idx < 0) {
-        LED_PIO->PIO_CODR = LED0_PIN;
-    }
+    gpioDrv->SetOutput(LED_PIN_0, GPIO_LOW);
+    gpioDrv->SetOutput(LED_PIN_1, GPIO_HIGH);
 
-    while (ledReg != NULL) {
-        // Set output (LED OFF)
-        ledReg->PIO_SODR = ledPin;
+    osDelay(dfltTickDelay);
+
+    // Toggle LEDs
+    while (true) {
+        gpioDrv->SetOutput(LED_PIN_0, GPIO_HIGH);
+        gpioDrv->SetOutput(LED_PIN_1, GPIO_LOW);
         osDelay(args->tickDelay);
-        // Clear output (LED ON)
-        ledReg->PIO_CODR = ledPin;
+
+        gpioDrv->SetOutput(LED_PIN_0, GPIO_LOW);
+        gpioDrv->SetOutput(LED_PIN_1, GPIO_HIGH);
         osDelay(args->tickDelay);
     }
 }

@@ -8,8 +8,8 @@ extern "C" {
 #include "pioConfig.h"
 #include "sam.h"
 
-extern pioGPIOConfig_t pioConfigs[MAX_PIO_PIN];
-
+void initPio(const pioGPIOConfig_t* configs, uint32_t numConfigs);
+void applyPinCfgToPortCfg(pioGPIOConfig_t const* cfg, uint32_t const pinMask, pio_registers_t* port);
 #ifdef __cplusplus
 }
 #endif

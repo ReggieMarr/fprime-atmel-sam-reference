@@ -16,35 +16,33 @@
 
 *******************************************************************************/
 
-//DOM-IGNORE-BEGIN
+// DOM-IGNORE-BEGIN
 /*******************************************************************************
-* Copyright (C) 2018 Microchip Technology Inc. and its subsidiaries.
-*
-* Subject to your compliance with these terms, you may use Microchip software
-* and any derivatives exclusively with Microchip products. It is your
-* responsibility to comply with third party license terms applicable to your
-* use of third party software (including open source software) that may
-* accompany Microchip software.
-*
-* THIS SOFTWARE IS SUPPLIED BY MICROCHIP "AS IS". NO WARRANTIES, WHETHER
-* EXPRESS, IMPLIED OR STATUTORY, APPLY TO THIS SOFTWARE, INCLUDING ANY IMPLIED
-* WARRANTIES OF NON-INFRINGEMENT, MERCHANTABILITY, AND FITNESS FOR A
-* PARTICULAR PURPOSE.
-*
-* IN NO EVENT WILL MICROCHIP BE LIABLE FOR ANY INDIRECT, SPECIAL, PUNITIVE,
-* INCIDENTAL OR CONSEQUENTIAL LOSS, DAMAGE, COST OR EXPENSE OF ANY KIND
-* WHATSOEVER RELATED TO THE SOFTWARE, HOWEVER CAUSED, EVEN IF MICROCHIP HAS
-* BEEN ADVISED OF THE POSSIBILITY OR THE DAMAGES ARE FORESEEABLE. TO THE
-* FULLEST EXTENT ALLOWED BY LAW, MICROCHIP'S TOTAL LIABILITY ON ALL CLAIMS IN
-* ANY WAY RELATED TO THIS SOFTWARE WILL NOT EXCEED THE AMOUNT OF FEES, IF ANY,
-* THAT YOU HAVE PAID DIRECTLY TO MICROCHIP FOR THIS SOFTWARE.
-*******************************************************************************/
-//DOM-IGNORE-END
+ * Copyright (C) 2018 Microchip Technology Inc. and its subsidiaries.
+ *
+ * Subject to your compliance with these terms, you may use Microchip software
+ * and any derivatives exclusively with Microchip products. It is your
+ * responsibility to comply with third party license terms applicable to your
+ * use of third party software (including open source software) that may
+ * accompany Microchip software.
+ *
+ * THIS SOFTWARE IS SUPPLIED BY MICROCHIP "AS IS". NO WARRANTIES, WHETHER
+ * EXPRESS, IMPLIED OR STATUTORY, APPLY TO THIS SOFTWARE, INCLUDING ANY IMPLIED
+ * WARRANTIES OF NON-INFRINGEMENT, MERCHANTABILITY, AND FITNESS FOR A
+ * PARTICULAR PURPOSE.
+ *
+ * IN NO EVENT WILL MICROCHIP BE LIABLE FOR ANY INDIRECT, SPECIAL, PUNITIVE,
+ * INCIDENTAL OR CONSEQUENTIAL LOSS, DAMAGE, COST OR EXPENSE OF ANY KIND
+ * WHATSOEVER RELATED TO THE SOFTWARE, HOWEVER CAUSED, EVEN IF MICROCHIP HAS
+ * BEEN ADVISED OF THE POSSIBILITY OR THE DAMAGES ARE FORESEEABLE. TO THE
+ * FULLEST EXTENT ALLOWED BY LAW, MICROCHIP'S TOTAL LIABILITY ON ALL CLAIMS IN
+ * ANY WAY RELATED TO THIS SOFTWARE WILL NOT EXCEED THE AMOUNT OF FEES, IF ANY,
+ * THAT YOU HAVE PAID DIRECTLY TO MICROCHIP FOR THIS SOFTWARE.
+ *******************************************************************************/
+// DOM-IGNORE-END
 
 #include "plib_pio.h"
 #include "interrupts.h"
-
-
 
 /******************************************************************************
   Function:
@@ -56,8 +54,7 @@
   Remarks:
     See plib_pio.h for more details.
 */
-void PIO_Initialize ( void )
-{
+void PIO_Initialize(void) {
     MATRIX_REGS->CCFG_SYSIO = 0x0;
     /* Selected System IO pins are configured as GPIO */
     MATRIX_REGS->CCFG_SYSIO |= 0x10;
@@ -83,8 +80,8 @@ void PIO_Initialize ( void )
 
     /************************ PIO B Initialization ************************/
     /* PORTB Peripheral Function Selection */
-    ((pio_registers_t*)PIO_PORT_B)->PIO_ABCDSR[0]= 0x10;
-    ((pio_registers_t*)PIO_PORT_B)->PIO_ABCDSR[1]= 0x10;
+    ((pio_registers_t*)PIO_PORT_B)->PIO_ABCDSR[0] = 0x10;
+    ((pio_registers_t*)PIO_PORT_B)->PIO_ABCDSR[1] = 0x10;
     /* PORTB PIO Disable and Peripheral Enable*/
     ((pio_registers_t*)PIO_PORT_B)->PIO_PDR = 0x10;
     ((pio_registers_t*)PIO_PORT_B)->PIO_PER = ~0x10;
@@ -153,7 +150,6 @@ void PIO_Initialize ( void )
     ((pio_registers_t*)PIO_PORT_E)->PIO_ODSR = 0x0;
     /* PORTE drive control */
     ((pio_registers_t*)PIO_PORT_E)->PIO_DRIVER = 0x0;
-
 }
 
 // *****************************************************************************
@@ -184,8 +180,7 @@ void PIO_Initialize ( void )
     low (0).
     Implemented pins are Right aligned in the 32-bit return value.
 */
-uint32_t PIO_PortRead(PIO_PORT port)
-{
+uint32_t PIO_PortRead(PIO_PORT port) {
     return ((pio_registers_t*)port)->PIO_PDSR;
 }
 
@@ -199,8 +194,7 @@ uint32_t PIO_PortRead(PIO_PORT port)
   Remarks:
     See plib_pio.h for more details.
 */
-void PIO_PortWrite(PIO_PORT port, uint32_t mask, uint32_t value)
-{
+void PIO_PortWrite(PIO_PORT port, uint32_t mask, uint32_t value) {
     ((pio_registers_t*)port)->PIO_ODSR = (((pio_registers_t*)port)->PIO_ODSR & (~mask)) | (mask & value);
 }
 
@@ -214,8 +208,7 @@ void PIO_PortWrite(PIO_PORT port, uint32_t mask, uint32_t value)
   Remarks:
     See plib_pio.h for more details.
 */
-uint32_t PIO_PortLatchRead(PIO_PORT port)
-{
+uint32_t PIO_PortLatchRead(PIO_PORT port) {
     return (((pio_registers_t*)port)->PIO_ODSR);
 }
 
@@ -229,8 +222,7 @@ uint32_t PIO_PortLatchRead(PIO_PORT port)
   Remarks:
     See plib_pio.h for more details.
 */
-void PIO_PortSet(PIO_PORT port, uint32_t mask)
-{
+void PIO_PortSet(PIO_PORT port, uint32_t mask) {
     ((pio_registers_t*)port)->PIO_SODR = mask;
 }
 
@@ -244,8 +236,7 @@ void PIO_PortSet(PIO_PORT port, uint32_t mask)
   Remarks:
     See plib_pio.h for more details.
 */
-void PIO_PortClear(PIO_PORT port, uint32_t mask)
-{
+void PIO_PortClear(PIO_PORT port, uint32_t mask) {
     ((pio_registers_t*)port)->PIO_CODR = mask;
 }
 
@@ -259,10 +250,9 @@ void PIO_PortClear(PIO_PORT port, uint32_t mask)
   Remarks:
     See plib_pio.h for more details.
 */
-void PIO_PortToggle(PIO_PORT port, uint32_t mask)
-{
+void PIO_PortToggle(PIO_PORT port, uint32_t mask) {
     /* Write into Clr and Set registers */
-    ((pio_registers_t*)port)->PIO_ODSR^= mask;
+    ((pio_registers_t*)port)->PIO_ODSR ^= mask;
 }
 
 // *****************************************************************************
@@ -275,8 +265,7 @@ void PIO_PortToggle(PIO_PORT port, uint32_t mask)
   Remarks:
     See plib_pio.h for more details.
 */
-void PIO_PortInputEnable(PIO_PORT port, uint32_t mask)
-{
+void PIO_PortInputEnable(PIO_PORT port, uint32_t mask) {
     ((pio_registers_t*)port)->PIO_ODR = mask;
 }
 
@@ -290,17 +279,9 @@ void PIO_PortInputEnable(PIO_PORT port, uint32_t mask)
   Remarks:
     See plib_pio.h for more details.
 */
-void PIO_PortOutputEnable(PIO_PORT port, uint32_t mask)
-{
+void PIO_PortOutputEnable(PIO_PORT port, uint32_t mask) {
     ((pio_registers_t*)port)->PIO_OER = mask;
 }
-
-
-
-
-
-
-
 
 /*******************************************************************************
  End of File

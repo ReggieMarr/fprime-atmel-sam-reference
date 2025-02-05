@@ -27,6 +27,8 @@ extern void Dummy_Handler(void);
 
 extern ARM_DRIVER_GPIO DRIVER_GPIO;
 
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof(*x))
+
 /** \cond DOXYGEN_SHOULD_SKIP_THIS */
 int main(void);
 /** \endcond */

@@ -60,7 +60,7 @@ project:
         - harmony/sam_v71_xult
       files:
         - file: harmony/sam_v71_xult/peripheral/clk/plib_clk.c
-        - file: harmony/sam_v71_xult/peripheral/pio/plib_pio.c
+        # - file: harmony/sam_v71_xult/peripheral/pio/plib_pio.c
         - file: harmony/sam_v71_xult/peripheral/nvic/plib_nvic.c
         - file: harmony/sam_v71_xult/peripheral/twihs/master/plib_twihs0_master.c
         - file: harmony/sam_v71_xult/peripheral/efc/plib_efc.c
@@ -99,6 +99,7 @@ project:
     - group: Device_HAL
       files:
         - file: hal_startup/main.c
+        - file: hal_startup/samv71_bsp_cfg.c
       add-path:
         - harmony/sam_v71_xult
 

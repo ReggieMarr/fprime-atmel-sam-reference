@@ -18,9 +18,10 @@
 #include "Driver_GPIO.h"
 #include <stdint.h>
 #include "Driver_Common.h"
-#include "component/pio.h"
 #include "hal_defs.h"
-#include "peripheral/pio/plib_pio.h"
+#include "sam.h"
+/* #include "peripheral/pio/plib_pio.h" */
+#include "pioConfig.h"
 
 // Pin mapping
 #define WRITE_PROTECTION_PASSWORD 0x50494F
@@ -30,15 +31,28 @@ static ARM_GPIO_SignalEvent_t gpio_cb_event = NULL;
 
 static inline bool IS_PIN_AVAILABLE(ARM_GPIO_Pin_t pin) {
     // First we check that the supplied pin is within the range of valid pin enumerations
-    bool isPinInValidRange = ((pin) < GPIO_MAX_PINS && (pin) != PIO_PIN_NONE);
+    bool isPinInValidRange = ((pin) < MAX_PIO_PIN && (pin) != PIO_PIN_NONE);
     CHECK(isPinInValidRange, return false);
 
     // Next we determine if the pin is configured as a GPIO
     uint32_t port = PIN_TO_PORT(pin);
-    uint32_t pin_mask = PIN_MASK(pin);
-    volatile pio_registers_t* pioPort = (pio_registers_t*)port;
+    uint32_t pin_mask = 255;
 
-    CHECK(pioPort->PIO_PER & pin_mask, return false);
+    switch (port) {
+        case PIOA_BASE_ADDRESS:
+        case PIOB_BASE_ADDRESS:
+        case PIOC_BASE_ADDRESS:
+        case PIOD_BASE_ADDRESS:
+        case PIOE_BASE_ADDRESS:
+            pin_mask = PIN_MASK(pin);
+            break;
+        default:
+            return false;
+    }
+
+    volatile uint32_t pioPer = ((pio_registers_t*)port)->PIO_PER;
+
+    CHECK(!(pioPer & pin_mask), return false);
 
     return true;
 }
@@ -85,15 +99,13 @@ static int32_t GPIO_Setup(ARM_GPIO_Pin_t pin, ARM_GPIO_SignalEvent_t cb_event) {
     return ARM_DRIVER_OK;
 }
 
-static bool GetDirection(ARM_GPIO_Pin_t pin, ARM_GPIO_DIRECTION* direction) {
-    CHECK(direction, return ARM_GPIO_ERROR);
-
+static ARM_GPIO_DIRECTION GetDirection(ARM_GPIO_Pin_t pin) {
     uint32_t port = PIN_TO_PORT(pin);
     uint32_t pin_mask = PIN_MASK(pin);
     volatile pio_registers_t* pioPort = (pio_registers_t*)port;
     uint32_t registerVal = pioPort->PIO_OSR;
 
-    *direction = (registerVal & pin_mask) ? ARM_GPIO_OUTPUT : ARM_GPIO_INPUT;
+    return (registerVal & pin_mask) ? ARM_GPIO_OUTPUT : ARM_GPIO_INPUT;
 }
 
 // Set GPIO Direction
@@ -124,8 +136,7 @@ static int32_t GPIO_SetDirection(ARM_GPIO_Pin_t pin, ARM_GPIO_DIRECTION directio
 
     CHECK(SET_WRITE_PROTECTION(pin, true) == ARM_DRIVER_OK, return ARM_DRIVER_ERROR);
 
-    ARM_GPIO_DIRECTION directionStatus;
-    GetDirection(pin, &directionStatus);
+    ARM_GPIO_DIRECTION directionStatus = GetDirection(pin);
     CHECK(directionStatus == direction, return ARM_DRIVER_ERROR);
 
     return result;
@@ -139,8 +150,7 @@ static int32_t GPIO_SetOutputMode(ARM_GPIO_Pin_t pin, ARM_GPIO_OUTPUT_MODE mode)
     uint32_t pin_mask = PIN_MASK(pin);
     volatile pio_registers_t* pioPort = (pio_registers_t*)port;
 
-    ARM_GPIO_DIRECTION directionStatus;
-    GetDirection(pin, &directionStatus);
+    ARM_GPIO_DIRECTION directionStatus = GetDirection(pin);
     CHECK(directionStatus == ARM_GPIO_OUTPUT, return ARM_DRIVER_ERROR);
 
     uint32_t result = SET_WRITE_PROTECTION(pin, false);
@@ -165,7 +175,7 @@ static int32_t GPIO_SetOutputMode(ARM_GPIO_Pin_t pin, ARM_GPIO_OUTPUT_MODE mode)
 }
 
 // Set GPIO Pull Resistor
-static int32_t ARM_GPIO_SetPullResistor(ARM_GPIO_Pin_t pin, ARM_GPIO_PULL_RESISTOR resistor) {
+static int32_t GPIO_SetPullResistor(ARM_GPIO_Pin_t pin, ARM_GPIO_PULL_RESISTOR resistor) {
     // Validate inputs
     CHECK(IS_PIN_AVAILABLE(pin), return ARM_GPIO_ERROR_PIN);
 
@@ -212,7 +222,7 @@ static int32_t ARM_GPIO_SetPullResistor(ARM_GPIO_Pin_t pin, ARM_GPIO_PULL_RESIST
 }
 
 // Set GPIO Event Trigger
-static int32_t ARM_GPIO_SetEventTrigger(ARM_GPIO_Pin_t pin, ARM_GPIO_EVENT_TRIGGER trigger) {
+static int32_t GPIO_SetEventTrigger(ARM_GPIO_Pin_t pin, ARM_GPIO_EVENT_TRIGGER trigger) {
     // Validate inputs
     CHECK(IS_PIN_AVAILABLE(pin), return ARM_GPIO_ERROR_PIN);
 
