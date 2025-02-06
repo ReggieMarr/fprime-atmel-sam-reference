@@ -11,7 +11,6 @@ default:
         - -mthumb
         - -mfpu=fpv5-d16
         - -mfloat-abi=hard
-        - -O0                                   # Optimization level
         - -g                                    # Debug information
         - -Wall                                 # Enable all warnings
       C:

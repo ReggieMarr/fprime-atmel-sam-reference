@@ -66,17 +66,17 @@ project:
         - file: harmony/sam_v71_xult/peripheral/efc/plib_efc.c
         - file: harmony/sam_v71_xult/peripheral/usart/plib_usart1.c
 
-    - group: Device_Harmony_OS
-      add-path:
-        - harmony/sam_v71_xult
-      files:
-        - file: harmony/sam_v71_xult/osal/osal_freertos.c
+    # - group: Device_Harmony_OS
+    #   add-path:
+    #     - harmony/sam_v71_xult
+    #   files:
+    #     - file: harmony/sam_v71_xult/osal/osal_freertos.c
 
     - group: Device_Harmony_Drivers
       add-path:
         - harmony/sam_v71_xult
       files:
-        - file: harmony/sam_v71_xult/driver/i2c/src/drv_i2c.c
+        # - file: harmony/sam_v71_xult/driver/i2c/src/drv_i2c.c
         - file: harmony/sam_v71_xult/driver/usart/src/drv_usart.c
 
     - group: Device_Harmony_HAL
@@ -93,7 +93,7 @@ project:
         - harmony/sam_v71_xult
       files:
         - file: cmsis/samv71_blink/impls/Driver_GPIO.c
-        - file: cmsis/samv71_blink/impls/Driver_I2C.c
+        # - file: cmsis/samv71_blink/impls/Driver_I2C.c
         - file: cmsis/samv71_blink/impls/Driver_USART.c
 
     - group: Device_HAL

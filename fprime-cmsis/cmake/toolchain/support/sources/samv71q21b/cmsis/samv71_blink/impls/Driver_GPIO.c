@@ -186,19 +186,15 @@ static int32_t GPIO_SetPullResistor(ARM_GPIO_Pin_t pin, ARM_GPIO_PULL_RESISTOR r
 
     SET_WRITE_PROTECTION(pin, false);
 
-    bool desiredPusr, desiredPpdr;
-
     switch (resistor) {
         case ARM_GPIO_PULL_UP:
-            pioPort->PIO_PUER |= pinMask;  // Enable pull-up
-            desiredPpdr = false;
-            desiredPusr = true;
+            pioPort->PIO_PUER |= pinMask;    // Enable pull-up
+            pioPort->PIO_PPDER &= ~pinMask;  // Disable pull-down
             break;
 
         case ARM_GPIO_PULL_DOWN:
             pioPort->PIO_PPDER |= pinMask;  // Enable pull-down
-            desiredPpdr = true;
-            desiredPusr = false;
+            pioPort->PIO_PUER &= ~pinMask;  // Disable pull-up
             break;
 
         case ARM_GPIO_PULL_NONE:
@@ -211,14 +207,6 @@ static int32_t GPIO_SetPullResistor(ARM_GPIO_Pin_t pin, ARM_GPIO_PULL_RESISTOR r
     }
 
     SET_WRITE_PROTECTION(pin, true);
-
-    if (result == ARM_DRIVER_OK) {
-        bool pusr, ppdr;
-        pusr = (pioPort->PIO_PUSR & pinMask) == 1 ? true : false;
-        ppdr = (pioPort->PIO_PPDSR & pinMask) == 1 ? true : false;
-        CHECK(pusr == desiredPusr, return ARM_DRIVER_ERROR);
-        CHECK(ppdr == desiredPpdr, return ARM_DRIVER_ERROR);
-    }
 
     return result;
 }
@@ -282,9 +270,9 @@ static void GPIO_SetOutput(ARM_GPIO_Pin_t pin, uint32_t val) {
     volatile pio_registers_t* pioPort = (pio_registers_t*)port;
 
     if (val) {
-        pioPort->PIO_SODR |= pinMask;
-    } else {
         pioPort->PIO_CODR |= pinMask;
+    } else {
+        pioPort->PIO_SODR |= pinMask;
     }
     // NOTE alternatively we could use the output data status register however that provides
     // blanket writes to each pin which is less effective in this case

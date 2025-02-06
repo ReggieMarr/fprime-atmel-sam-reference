@@ -2,18 +2,22 @@
 #include "Driver_GPIO.h"
 #include "Driver_I2C.h"
 #include "Driver_USART.h"
+#include "FreeRTOS.h"
+#include "cmsis_compiler.h"
 #include "cmsis_os2.h"
 #include "definitions.h"
+#include "freertos_evr.h"
 #include "hal_defs.h"
 #include "os_tick.h"
 #include "peripheral/clk/plib_clk.h"
 #include "pioConfig.h"
+#include "portmacro.h"
 #include "sam.h"
 #include "samv71_bsp_cfg.h"
 #include "samv71q21b.h"
 
-extern ARM_DRIVER_I2C Driver_I2C0;
-static ARM_DRIVER_I2C* I2Cdrv = &Driver_I2C0;
+/* extern ARM_DRIVER_I2C Driver_I2C0; */
+/* static ARM_DRIVER_I2C* I2Cdrv = &Driver_I2C0; */
 
 extern ARM_DRIVER_USART Driver_USART0;
 static ARM_DRIVER_USART* usartDrv = &Driver_USART0;
@@ -61,8 +65,8 @@ void _on_bootstrap(void) {
     USART1_Initialize();
 
     /* Initialize Peripheral Drivers */
-    I2Cdrv->Initialize(NULL);
-    usartDrv->Initialize(NULL);
+    /* I2Cdrv->Initialize(NULL); */
+    /* usartDrv->Initialize(NULL); */
 
     /* Configure Nested Vector Interrupt Controller (NVIC) */
     NVIC_Initialize();
@@ -90,6 +94,30 @@ void setup_leds(void) {
     gpioDrv->SetPullResistor(LEDS[1], ARM_GPIO_PULL_NONE);
 }
 
+void toggle_oscillating_leds(int cycleCnt, int delay) {
+    for (int i = 0; i < cycleCnt; i++) {
+        gpioDrv->SetOutput(LEDS[0], GPIO_HIGH);
+        gpioDrv->SetOutput(LEDS[1], GPIO_LOW);
+        osDelay(delay);
+
+        gpioDrv->SetOutput(LEDS[0], GPIO_LOW);
+        gpioDrv->SetOutput(LEDS[1], GPIO_HIGH);
+        osDelay(delay);
+    }
+}
+
+void toggle_combined_leds(int cycleCnt, int delay) {
+    for (int i = 0; i < cycleCnt; i++) {
+        gpioDrv->SetOutput(LEDS[0], GPIO_HIGH);
+        gpioDrv->SetOutput(LEDS[1], GPIO_HIGH);
+        osDelay(delay);
+
+        gpioDrv->SetOutput(LEDS[0], GPIO_LOW);
+        gpioDrv->SetOutput(LEDS[1], GPIO_LOW);
+        osDelay(delay);
+    }
+}
+
 void blink_leds(void* argument) {
     blinkArg_t* args = (blinkArg_t*)argument;
     size_t dfltTickDelay = 50000;
@@ -112,87 +140,91 @@ void blink_leds(void* argument) {
 
     // Toggle LEDs
     while (true) {
-        gpioDrv->SetOutput(LEDS[0], GPIO_HIGH);
-        gpioDrv->SetOutput(LEDS[1], GPIO_LOW);
-        osDelay(args->tickDelay);
+        toggle_oscillating_leds(25, args->tickDelay);
 
         gpioDrv->SetOutput(LEDS[0], GPIO_LOW);
-        gpioDrv->SetOutput(LEDS[1], GPIO_HIGH);
-        osDelay(args->tickDelay);
+        gpioDrv->SetOutput(LEDS[1], GPIO_LOW);
+        osDelay(args->tickDelay * 2);
     }
 }
+__NO_RETURN void run_console(void* argument) {
+    volatile int32_t status;
+    uint32_t shortDelay = 5000;
+    uint32_t longDelay = 10000;
 
-void setup_console(void) {
-    int32_t status;
+    toggle_combined_leds(3, 5000);
 
     // STEP 1: Signal start (both LEDs OFF)
     gpioDrv->SetOutput(LEDS[0], GPIO_LOW);
     gpioDrv->SetOutput(LEDS[1], GPIO_LOW);
-    osDelay(500);
+    osDelay(shortDelay);
 
     // STEP 2: Initialize USART
     status = usartDrv->Initialize(NULL);
-    if (status != ARM_DRIVER_OK) {
+    CHECK(status == ARM_DRIVER_OK, {
         // ERROR: Turn Both LEDs ON & halt (USART Init Failed)
         gpioDrv->SetOutput(LEDS[0], GPIO_HIGH);
         gpioDrv->SetOutput(LEDS[1], GPIO_HIGH);
-        return;
-    }
+    });
     // SUCCESS: Keep LED[0] ON
     gpioDrv->SetOutput(LEDS[0], GPIO_HIGH);
-    osDelay(500);
+    osDelay(shortDelay);
 
     // STEP 3: Power on USART
     status = usartDrv->PowerControl(ARM_POWER_FULL);
-    if (status != ARM_DRIVER_OK) {
+    CHECK(status == ARM_DRIVER_OK, {
         gpioDrv->SetOutput(LEDS[1], GPIO_HIGH);  // ERROR: Both LEDs ON ==> USART Power Fail
-        return;
-    }
+    });
     // SUCCESS: Keep LED[1] ON
     gpioDrv->SetOutput(LEDS[1], GPIO_HIGH);
-    osDelay(500);
+    osDelay(shortDelay);
 
     // STEP 4: Configure USART (8N1, 115200 baud)
     status = usartDrv->Control(ARM_USART_MODE_ASYNCHRONOUS | ARM_USART_DATA_BITS_8 | ARM_USART_PARITY_NONE |
                                    ARM_USART_STOP_BITS_1 | ARM_USART_FLOW_CONTROL_NONE,
                                115200);
-    if (status != ARM_DRIVER_OK) {
+    CHECK(status == ARM_DRIVER_OK, {
         // ERROR: Both LEDs ON (solid) ==> USART Config Fail
         gpioDrv->SetOutput(LEDS[0], GPIO_HIGH);
         gpioDrv->SetOutput(LEDS[1], GPIO_HIGH);
-        return;
-    }
+    });
 
     // SUCCESS: Toggle LEDs Fast (USART Config Successful)
-    for (int i = 0; i < 5; i++) {
-        /* gpioDrv->ToggleOutput(LEDS[0]); */
-        /* gpioDrv->ToggleOutput(LEDS[1]); */
-        osDelay(100);
-    }
+    toggle_combined_leds(5, shortDelay);
+
+    gpioDrv->SetOutput(LEDS[0], GPIO_LOW);
+    gpioDrv->SetOutput(LEDS[1], GPIO_LOW);
+    osDelay(longDelay * 2);
 
     // STEP 5: Send Test Data
     const char testMsg[] = "USART Test\n";
     status = usartDrv->Send(testMsg, sizeof(testMsg) - 1);
-    if (status != ARM_DRIVER_OK) {
+    CHECK(status == ARM_DRIVER_OK, {
         // ERROR: Turn Both LEDs ON (solid) ==> USART Send Fail
         gpioDrv->SetOutput(LEDS[0], GPIO_HIGH);
         gpioDrv->SetOutput(LEDS[1], GPIO_HIGH);
-        return;
-    }
+    });
 
     // SUCCESS: Toggle LEDs Slowly (USART Sent Data Successfully)
-    for (int i = 0; i < 5; i++) {
-        /* gpioDrv->ToggleOutput(LEDS[0]); */
-        /* gpioDrv->ToggleOutput(LEDS[1]); */
-        osDelay(500);
-    }
+    toggle_oscillating_leds(5, longDelay);
+    gpioDrv->SetOutput(LEDS[0], GPIO_LOW);
+    gpioDrv->SetOutput(LEDS[1], GPIO_LOW);
 
     // STEP 6: Indicate Ready State (Blink Normally)
-    blinkArg_t blinkArgs = {.tickDelay = 1000};
-    osThreadNew(blink_leds, &blinkArgs, NULL);
+    /* blinkArg_t blinkArgs = {.tickDelay = 1000}; */
+    /* osThreadNew(blink_leds, &blinkArgs, NULL); */
 }
 
-/* void run_console(void* argument) {} */
+static StaticTask_t console_thread_cb;
+
+static StackType_t console_thread_stack[256];
+
+static const osThreadAttr_t console_thread_cfg = {
+    .cb_mem = &console_thread_cb,
+    .cb_size = sizeof(console_thread_cb),
+    .stack_mem = &console_thread_stack[0],
+    .stack_size = sizeof(console_thread_stack),
+};
 
 int main(void) {
     static blinkArg_t led0 = {.idx = 0, .tickDelay = 5000};
@@ -201,16 +233,19 @@ int main(void) {
     // Initialize LED's
     setup_leds();
 
-    /* setup_console(); */
-
     // Initialize CMSIS-RTOS
-    osKernelInitialize();
+    osStatus_t osSts;
+    osSts = osKernelInitialize();
+    CHECK(osSts == osOK, return -1);
+    /* run_console(NULL); */
     // Create application main thread(s)
-    osThreadNew(blink_leds, &led0, NULL);
+    /* osThreadNew(blink_leds, &led0, NULL); */
     /* osThreadNew(blink_leds, &led1, NULL); */
-    /* osThreadNew(run_console, NULL, NULL); */
+    osThreadId_t tId = osThreadNew(run_console, NULL, &console_thread_cfg);
+    CHECK(tId, return -1);
     // Start thread execution
-    osKernelStart();
+    osSts = osKernelStart();
+    CHECK(osSts == osOK, return -1);
 
     /* Wait forever here other wise the owned threads will die */
     for (;;) {

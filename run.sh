@@ -48,6 +48,7 @@ Options:
   --daemon             Run as daemon
   --debug              Run using gdb/gdbserver
   --standalone         Run the command without starting any implied dependencies
+  --logs               To be used with the inspect command, just polls for logs from the assumed to be running container
   --help               Show this help message
 Commands:
   mbd-to-xml           Convert MBD to XML
@@ -67,6 +68,7 @@ CLEAN=0
 DEBUG=0
 STANDALONE=0
 DAEMON=0
+LOGS=0
 
 # Process flags
 for arg in "$@"; do
@@ -74,6 +76,7 @@ for arg in "$@"; do
         --daemon) DAEMON=1 ;;
         --clean) CLEAN=1 ;;
         --debug) DEBUG=1 ;;
+        --logs) LOGS=1 ;;
         --standalone) STANDALONE=1 ;;
         --help) show_help; exit 0 ;;
     esac
@@ -176,7 +179,7 @@ update_build_env() {
   exec_cmd "$mod_dict_cmd"
 }
 
-build_cmsis_startup() {
+build_cmsis_st() {
     cmsis_path="fprime-cmsis/cmake/toolchain/support/sources/samv71q21b"
     flags="-w $SAM_WDIR/$cmsis_path $DEFAULT_FLAGS"
     # NOTE we often get stuck on trivial schema errors.
@@ -368,8 +371,8 @@ EOF
 
         exec_cmd "$MOD_DICT_CMD"
       ;;
-      "cmsis-startup")
-        build_cmsis_startup
+      "cmsis-st")
+        build_cmsis_st
       ;;
       "keil-cfg")
         keil_exec "build"
@@ -398,7 +401,6 @@ EOF
     case $EXEC_TARGET in
       "cmsis-st")
         # Stands for cmsis smoketest
-        cfg_path=".vscode/atsamv71_xplained_edbg.cfg"
         bin_path="./fprime-cmsis/cmake/toolchain/support/sources/samv71q21b/out/blinky/SamV71-Xplained-Board/Debug/blinky.elf"
         debug_cmd="pyocd gdbserver --elf ${bin_path} -t atsamv71q21b"
         load_cmd="pyocd load ${bin_path} -t atsamv71q21b"
@@ -427,12 +429,12 @@ EOF
       "mplab-cfg")
         mplab_exec "mplab_ide"
       ;;
-      "gdb-server")
+      "debug-cmsis-st")
         bin_path="./fprime-cmsis/cmake/toolchain/support/sources/samv71q21b/out/blinky/SamV71-Xplained-Board/Debug/blinky.elf"
-        serve_cmd="pyocd gdbserver --elf $bin_path -t atsamv71q21b"
+        debug_cmd="pyocd gdbserver --elf ${bin_path} -t atsamv71q21b"
 
-        # run_docker_compose $cmd --service="sam" -- $flags
-        exec_cmd "$serve_cmd"
+        export HOST_DEVICE_PORT=$(find_board_port) || exit 1
+        run_docker_compose "sam-tty" "bash -c \"${debug_cmd}\""
       ;;
       "base")
         echo "Not yet supported"
@@ -460,11 +462,19 @@ EOF
               # Fall through, all these case are the same.
           ;&
             "sam")
-            try_docker_exec $INSPECT_TARGET "bash" "-it"
+              if [ "$LOGS" -eq 1 ]; then
+                  exec_cmd "docker compose logs -f ${INSPECT_TARGET}"
+              else
+                try_docker_exec $INSPECT_TARGET "bash" "-it"
+              fi
           ;;
             "sam-tty")
-            export HOST_DEVICE_PORT=$(find_board_port) || exit 1
-            try_docker_exec $INSPECT_TARGET "bash" "-it"
+              export HOST_DEVICE_PORT=$(find_board_port) || exit 1
+              if [ "$LOGS" -eq 1 ]; then
+                  exec_cmd "docker compose logs -f ${INSPECT_TARGET}"
+              else
+                try_docker_exec $INSPECT_TARGET "bash" "-it"
+              fi
           ;;
           *)
           echo "Invalid inspect target: ${INSPECT_TARGET}"

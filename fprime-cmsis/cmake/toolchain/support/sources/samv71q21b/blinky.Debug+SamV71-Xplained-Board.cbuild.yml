@@ -44,9 +44,9 @@ build:
       - -mthumb
       - -mfpu=fpv5-d16
       - -mfloat-abi=hard
-      - -O0
       - -g
       - -Wall
+      - -Og
       - -fdiagnostics-color=always
     CPP:
       - -D__SAMV71Q21B__
@@ -55,9 +55,9 @@ build:
       - -mthumb
       - -mfpu=fpv5-d16
       - -mfloat-abi=hard
-      - -O0
       - -g
       - -Wall
+      - -Og
       - -fdiagnostics-color=always
     Link:
       - -specs=nosys.specs
@@ -375,18 +375,10 @@ build:
           category: sourceC
         - file: harmony/sam_v71_xult/peripheral/usart/plib_usart1.c
           category: sourceC
-    - group: Device_Harmony_OS
-      add-path:
-        - harmony/sam_v71_xult
-      files:
-        - file: harmony/sam_v71_xult/osal/osal_freertos.c
-          category: sourceC
     - group: Device_Harmony_Drivers
       add-path:
         - harmony/sam_v71_xult
       files:
-        - file: harmony/sam_v71_xult/driver/i2c/src/drv_i2c.c
-          category: sourceC
         - file: harmony/sam_v71_xult/driver/usart/src/drv_usart.c
           category: sourceC
     - group: Device_Harmony_HAL
@@ -403,8 +395,6 @@ build:
         - harmony/sam_v71_xult
       files:
         - file: cmsis/samv71_blink/impls/Driver_GPIO.c
-          category: sourceC
-        - file: cmsis/samv71_blink/impls/Driver_I2C.c
           category: sourceC
         - file: cmsis/samv71_blink/impls/Driver_USART.c
           category: sourceC

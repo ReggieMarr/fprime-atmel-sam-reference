@@ -14,30 +14,30 @@
     Driver Local Data Structures
 *******************************************************************************/
 
-//DOM-IGNORE-BEGIN
+// DOM-IGNORE-BEGIN
 /*******************************************************************************
-* Copyright (C) 2018 Microchip Technology Inc. and its subsidiaries.
-*
-* Subject to your compliance with these terms, you may use Microchip software
-* and any derivatives exclusively with Microchip products. It is your
-* responsibility to comply with third party license terms applicable to your
-* use of third party software (including open source software) that may
-* accompany Microchip software.
-*
-* THIS SOFTWARE IS SUPPLIED BY MICROCHIP "AS IS". NO WARRANTIES, WHETHER
-* EXPRESS, IMPLIED OR STATUTORY, APPLY TO THIS SOFTWARE, INCLUDING ANY IMPLIED
-* WARRANTIES OF NON-INFRINGEMENT, MERCHANTABILITY, AND FITNESS FOR A
-* PARTICULAR PURPOSE.
-*
-* IN NO EVENT WILL MICROCHIP BE LIABLE FOR ANY INDIRECT, SPECIAL, PUNITIVE,
-* INCIDENTAL OR CONSEQUENTIAL LOSS, DAMAGE, COST OR EXPENSE OF ANY KIND
-* WHATSOEVER RELATED TO THE SOFTWARE, HOWEVER CAUSED, EVEN IF MICROCHIP HAS
-* BEEN ADVISED OF THE POSSIBILITY OR THE DAMAGES ARE FORESEEABLE. TO THE
-* FULLEST EXTENT ALLOWED BY LAW, MICROCHIP'S TOTAL LIABILITY ON ALL CLAIMS IN
-* ANY WAY RELATED TO THIS SOFTWARE WILL NOT EXCEED THE AMOUNT OF FEES, IF ANY,
-* THAT YOU HAVE PAID DIRECTLY TO MICROCHIP FOR THIS SOFTWARE.
-*******************************************************************************/
-//DOM-IGNORE-END
+ * Copyright (C) 2018 Microchip Technology Inc. and its subsidiaries.
+ *
+ * Subject to your compliance with these terms, you may use Microchip software
+ * and any derivatives exclusively with Microchip products. It is your
+ * responsibility to comply with third party license terms applicable to your
+ * use of third party software (including open source software) that may
+ * accompany Microchip software.
+ *
+ * THIS SOFTWARE IS SUPPLIED BY MICROCHIP "AS IS". NO WARRANTIES, WHETHER
+ * EXPRESS, IMPLIED OR STATUTORY, APPLY TO THIS SOFTWARE, INCLUDING ANY IMPLIED
+ * WARRANTIES OF NON-INFRINGEMENT, MERCHANTABILITY, AND FITNESS FOR A
+ * PARTICULAR PURPOSE.
+ *
+ * IN NO EVENT WILL MICROCHIP BE LIABLE FOR ANY INDIRECT, SPECIAL, PUNITIVE,
+ * INCIDENTAL OR CONSEQUENTIAL LOSS, DAMAGE, COST OR EXPENSE OF ANY KIND
+ * WHATSOEVER RELATED TO THE SOFTWARE, HOWEVER CAUSED, EVEN IF MICROCHIP HAS
+ * BEEN ADVISED OF THE POSSIBILITY OR THE DAMAGES ARE FORESEEABLE. TO THE
+ * FULLEST EXTENT ALLOWED BY LAW, MICROCHIP'S TOTAL LIABILITY ON ALL CLAIMS IN
+ * ANY WAY RELATED TO THIS SOFTWARE WILL NOT EXCEED THE AMOUNT OF FEES, IF ANY,
+ * THAT YOU HAVE PAID DIRECTLY TO MICROCHIP FOR THIS SOFTWARE.
+ *******************************************************************************/
+// DOM-IGNORE-END
 
 #ifndef DRV_USART_LOCAL_H
 #define DRV_USART_LOCAL_H
@@ -48,8 +48,8 @@
 // *****************************************************************************
 // *****************************************************************************
 
+#include "cmsis_os2.h"
 #include "driver/usart/drv_usart.h"
-#include "osal/osal.h"
 
 // *****************************************************************************
 // *****************************************************************************
@@ -72,14 +72,13 @@
     None
 */
 
-#define DRV_USART_CLIENT_INDEX_MASK               (0x000000FF)
+#define DRV_USART_CLIENT_INDEX_MASK (0x000000FF)
 
-#define DRV_USART_INSTANCE_INDEX_MASK             (0x0000FF00)
+#define DRV_USART_INSTANCE_INDEX_MASK (0x0000FF00)
 
-#define DRV_USART_TOKEN_MASK                      (0xFFFF0000)
+#define DRV_USART_TOKEN_MASK (0xFFFF0000)
 
-#define DRV_USART_TOKEN_MAX                       (DRV_USART_TOKEN_MASK >> 16)
-
+#define DRV_USART_TOKEN_MAX (DRV_USART_TOKEN_MASK >> 16)
 
 // *****************************************************************************
 /* USART Driver Buffer Events
@@ -99,8 +98,7 @@
     transfer request is completed.
 */
 
-typedef enum
-{
+typedef enum {
     /* All data from or to the buffer was transferred successfully. */
     DRV_USART_REQUEST_STATUS_COMPLETE,
 
@@ -122,8 +120,7 @@ typedef enum
     None.
 */
 
-typedef struct
-{
+typedef struct {
     /* Flag to indicate this object is in use  */
     bool inUse;
 
@@ -165,19 +162,24 @@ typedef struct
     volatile DRV_USART_REQUEST_STATUS rxRequestStatus;
 
     /* Transmit mutex */
-    OSAL_MUTEX_DECLARE(clientMutex);
+    osMutexId_t clientMutex;
+    /* OSAL_MUTEX_DECLARE(clientMutex); */
 
     /* Transmit mutex */
-    OSAL_MUTEX_DECLARE(txTransferMutex);
+    osMutexId_t txTransferMutex;
+    /* OSAL_MUTEX_DECLARE(txTransferMutex); */
 
     /* Receive mutex */
-    OSAL_MUTEX_DECLARE(rxTransferMutex);
+    osMutexId_t rxTransferMutex;
+    /* OSAL_MUTEX_DECLARE(rxTransferMutex); */
 
     /* Transmit complete semaphore. This is released from ISR*/
-    OSAL_SEM_DECLARE (txTransferDone);
+    osMutexId_t txTransferDone;
+    /* OSAL_SEM_DECLARE (txTransferDone); */
 
     /* Receive complete semaphore. This is released from ISR*/
-    OSAL_SEM_DECLARE (rxTransferDone);
+    osSemaphoreId_t rxTransferDone;
+    /* OSAL_SEM_DECLARE (rxTransferDone); */
 
     const uint32_t* remapDataWidth;
 
@@ -191,27 +193,26 @@ typedef struct
 
 } DRV_USART_OBJ;
 
-typedef struct
-{
+typedef struct {
     /* The hardware instance object associated with the client */
-    DRV_USART_OBJ                   *hDriver;
+    DRV_USART_OBJ* hDriver;
 
     /* The IO intent with which the client was opened */
-    DRV_IO_INTENT                   ioIntent;
+    DRV_IO_INTENT ioIntent;
 
     /* Errors associated with the USART hardware instance */
-    DRV_USART_ERROR                 errors;
+    DRV_USART_ERROR errors;
 
     /* Client handle that was assigned to this client object when it was
      * opened by the user.
      */
-    DRV_HANDLE                      clientHandle;
+    DRV_HANDLE clientHandle;
 
     /* This flags indicates if the object is in use or is
      * available
      */
-    bool                            inUse;
+    bool inUse;
 
 } DRV_USART_CLIENT_OBJ;
 
-#endif //#ifndef DRV_USART_LOCAL_H
+#endif  // #ifndef DRV_USART_LOCAL_H

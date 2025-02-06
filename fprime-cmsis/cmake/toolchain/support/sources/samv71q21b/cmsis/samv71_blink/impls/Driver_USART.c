@@ -19,6 +19,7 @@
 #include "Driver_USART.h"
 #include <stdint.h>
 #include <string.h>
+#include "configuration.h"
 #include "driver/usart/drv_usart.h"
 #include "hal_defs.h"
 #include "peripheral/usart/plib_usart1.h"
@@ -123,10 +124,6 @@ typedef struct {
 static impl_t ME;
 
 static int32_t ARM_USART_Initialize(ARM_USART_SignalEvent_t cb_event) {
-    if (ME.initialized) {
-        return ARM_DRIVER_OK;
-    }
-
     ME.cb_event = cb_event;
 
     ME.sysObj = DRV_USART_Initialize(DRV_USART_INDEX_0, (SYS_MODULE_INIT*)&drvUsart0InitData);
@@ -141,7 +138,7 @@ static int32_t ARM_USART_Initialize(ARM_USART_SignalEvent_t cb_event) {
     }
 
     ME.handle = DRV_USART_Open(DRV_USART_INDEX_0, DRV_IO_INTENT_READWRITE | DRV_IO_INTENT_NONBLOCKING);
-    CHECK(ME.handle == DRV_HANDLE_INVALID, return ARM_DRIVER_ERROR);
+    CHECK(ME.handle != DRV_HANDLE_INVALID, return ARM_DRIVER_ERROR);
 
     ME.initialized = true;
     ME.powered = false;

@@ -20,6 +20,12 @@ extern void __attribute__((weak, long_call)) _on_bootstrap(void);
 
 #define __builtin_software_breakpoint() __BKPT(0);
 
+#ifdef __DEBUG
+#define BKPT __builtin_software_breakpoint()
+#else
+#define BKPT
+#endif
+
 /* Reset handler */
 extern void Reset_Handler(void);
 
@@ -35,12 +41,13 @@ int main(void);
 
 #define OK 0
 #define ERROR -1
-#define CHECK(cond, err_string, ...) \
-    do {                             \
-        if (!(cond)) {               \
-            __VA_ARGS__;             \
-            break;                   \
-        }                            \
+#define CHECK(cond, ...) \
+    do {                 \
+        if (!(cond)) {   \
+            BKPT;        \
+            __VA_ARGS__; \
+            break;       \
+        }                \
     } while (0);
 
 #endif  // _DEVICE_COMMON_H

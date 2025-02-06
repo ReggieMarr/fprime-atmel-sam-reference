@@ -14,7 +14,7 @@ solution:
       misc:
         - for-compiler: GCC
           C-CPP:
-            - -O0
+            - -Og
             - -g
             - -fdiagnostics-color=always
 
