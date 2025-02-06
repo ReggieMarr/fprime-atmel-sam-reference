@@ -46,6 +46,7 @@ Usage: $(basename "$0") [OPTIONS] COMMAND
 Options:
   --clean              Clean build
   --daemon             Run as daemon
+  --debug              Run using gdb/gdbserver
   --standalone         Run the command without starting any implied dependencies
   --help               Show this help message
 Commands:
@@ -63,6 +64,7 @@ DEFAULT_SERVICE="sam"
 DEFAULT_FLAGS="-it"
 BASE_FLAGS="--rm --user $(id -u):$(id -g) --remove-orphans"
 CLEAN=0
+DEBUG=0
 STANDALONE=0
 DAEMON=0
 
@@ -71,6 +73,7 @@ for arg in "$@"; do
     case $arg in
         --daemon) DAEMON=1 ;;
         --clean) CLEAN=1 ;;
+        --debug) DEBUG=1 ;;
         --standalone) STANDALONE=1 ;;
         --help) show_help; exit 0 ;;
     esac
@@ -393,16 +396,18 @@ EOF
     [ -z "$EXEC_TARGET" ] && { echo "Error: must specify target to exec"; exit 1; }
 
     case $EXEC_TARGET in
-      "cmsis-startup")
+      "cmsis-st")
+        # Stands for cmsis smoketest
         cfg_path=".vscode/atsamv71_xplained_edbg.cfg"
         bin_path="./fprime-cmsis/cmake/toolchain/support/sources/samv71q21b/out/blinky/SamV71-Xplained-Board/Debug/blinky.elf"
-        # bin_path="./Base/build/base_app_SAMV71Q21B.elf"
-        program_cmd="init; reset halt; program $bin_path preverify verify reset exit"
-        # program_cmd="init; reset halt; exit"
-        load_cmd="openocd -d1 -f $cfg_path -c \"$program_cmd\""
+        debug_cmd="pyocd gdbserver --elf ${bin_path} -t atsamv71q21b"
+        load_cmd="pyocd load ${bin_path} -t atsamv71q21b"
 
-        # run_docker_compose $cmd --service="sam" -- $flags
-        exec_cmd "$load_cmd"
+        [ "$DEBUG" -eq 1 ] && load_cmd+=" && $debug_cmd"
+
+        export HOST_DEVICE_PORT=$(find_board_port) || exit 1
+
+        run_docker_compose "sam-tty" "bash -c \"${load_cmd}\""
       ;;
       *)
       echo "Invalid operation."
@@ -455,6 +460,10 @@ EOF
               # Fall through, all these case are the same.
           ;&
             "sam")
+            try_docker_exec $INSPECT_TARGET "bash" "-it"
+          ;;
+            "sam-tty")
+            export HOST_DEVICE_PORT=$(find_board_port) || exit 1
             try_docker_exec $INSPECT_TARGET "bash" "-it"
           ;;
           *)
