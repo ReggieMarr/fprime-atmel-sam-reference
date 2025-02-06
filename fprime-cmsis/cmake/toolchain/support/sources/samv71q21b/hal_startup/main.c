@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include "Driver_Common.h"
 #include "Driver_GPIO.h"
 #include "Driver_I2C.h"
 #include "Driver_USART.h"
@@ -66,7 +67,6 @@ void _on_bootstrap(void) {
 
     /* Initialize Peripheral Drivers */
     /* I2Cdrv->Initialize(NULL); */
-    /* usartDrv->Initialize(NULL); */
 
     /* Configure Nested Vector Interrupt Controller (NVIC) */
     NVIC_Initialize();
@@ -79,6 +79,19 @@ typedef struct {
     size_t idx;
     size_t tickDelay;
 } blinkArg_t;
+
+static StaticTask_t led_thread_cb;
+
+static StackType_t led_thread_stack[256];
+
+static const osThreadAttr_t led_thread_cfg = {
+    .cb_mem = &led_thread_cb,
+    .cb_size = sizeof(led_thread_cb),
+    .stack_mem = &led_thread_stack[0],
+    .stack_size = sizeof(led_thread_stack),
+};
+
+static osSemaphoreId_t readyToBlink;
 
 void setup_leds(void) {
     gpioDrv->Setup(LEDS[0], NULL);
@@ -118,35 +131,33 @@ void toggle_combined_leds(int cycleCnt, int delay) {
     }
 }
 
-void blink_leds(void* argument) {
+__NO_RETURN void blink_leds(void* argument) {
     blinkArg_t* args = (blinkArg_t*)argument;
-    size_t dfltTickDelay = 50000;
+    osSemaphoreAcquire(readyToBlink, osWaitForever);
 
-    // Set everything off
-    gpioDrv->SetOutput(LEDS[0], GPIO_LOW);
-    gpioDrv->SetOutput(LEDS[1], GPIO_LOW);
-    osDelay(dfltTickDelay);
-
-    // Set everything on
-    gpioDrv->SetOutput(LEDS[0], GPIO_HIGH);
-    gpioDrv->SetOutput(LEDS[1], GPIO_HIGH);
-
-    osDelay(dfltTickDelay);
-
-    gpioDrv->SetOutput(LEDS[0], GPIO_LOW);
-    gpioDrv->SetOutput(LEDS[1], GPIO_HIGH);
-
-    osDelay(dfltTickDelay);
+    toggle_combined_leds(3, args->tickDelay * 3);
 
     // Toggle LEDs
     while (true) {
-        toggle_oscillating_leds(25, args->tickDelay);
+        toggle_oscillating_leds(10, args->tickDelay);
 
         gpioDrv->SetOutput(LEDS[0], GPIO_LOW);
         gpioDrv->SetOutput(LEDS[1], GPIO_LOW);
-        osDelay(args->tickDelay * 2);
+        osDelay(args->tickDelay * 10);
     }
 }
+
+static StaticTask_t console_thread_cb;
+
+static StackType_t console_thread_stack[256];
+
+static const osThreadAttr_t console_thread_cfg = {
+    .cb_mem = &console_thread_cb,
+    .cb_size = sizeof(console_thread_cb),
+    .stack_mem = &console_thread_stack[0],
+    .stack_size = sizeof(console_thread_stack),
+};
+
 __NO_RETURN void run_console(void* argument) {
     volatile int32_t status;
     uint32_t shortDelay = 5000;
@@ -209,26 +220,18 @@ __NO_RETURN void run_console(void* argument) {
     toggle_oscillating_leds(5, longDelay);
     gpioDrv->SetOutput(LEDS[0], GPIO_LOW);
     gpioDrv->SetOutput(LEDS[1], GPIO_LOW);
+    osDelay(longDelay * 3);
 
-    // STEP 6: Indicate Ready State (Blink Normally)
-    /* blinkArg_t blinkArgs = {.tickDelay = 1000}; */
-    /* osThreadNew(blink_leds, &blinkArgs, NULL); */
+    // STEP 6: Indicate Ready State
+    (void)osSemaphoreRelease(readyToBlink);
+
+    osThreadExit();
 }
 
-static StaticTask_t console_thread_cb;
-
-static StackType_t console_thread_stack[256];
-
-static const osThreadAttr_t console_thread_cfg = {
-    .cb_mem = &console_thread_cb,
-    .cb_size = sizeof(console_thread_cb),
-    .stack_mem = &console_thread_stack[0],
-    .stack_size = sizeof(console_thread_stack),
-};
-
 int main(void) {
-    static blinkArg_t led0 = {.idx = 0, .tickDelay = 5000};
-    static blinkArg_t led1 = {.idx = 1, .tickDelay = 10000};
+    // NOTE I'm not entirely sure why this needs to be static but seeminly if its not the
+    // thread doesn't retain it (could be something about being the the main launch)
+    static blinkArg_t blinkArgs = {.tickDelay = 1000};
 
     // Initialize LED's
     setup_leds();
@@ -236,19 +239,26 @@ int main(void) {
     // Initialize CMSIS-RTOS
     osStatus_t osSts;
     osSts = osKernelInitialize();
-    CHECK(osSts == osOK, return -1);
-    /* run_console(NULL); */
+    CHECK(osSts == osOK, return ARM_DRIVER_ERROR);
+
+    readyToBlink = osSemaphoreNew(1, 0, NULL);
+    CHECK(readyToBlink, return ARM_DRIVER_ERROR);
+
     // Create application main thread(s)
-    /* osThreadNew(blink_leds, &led0, NULL); */
-    /* osThreadNew(blink_leds, &led1, NULL); */
-    osThreadId_t tId = osThreadNew(run_console, NULL, &console_thread_cfg);
+    osThreadId_t tId;
+    tId = osThreadNew(blink_leds, &blinkArgs, &led_thread_cfg);
     CHECK(tId, return -1);
+
+    tId = osThreadNew(run_console, NULL, &console_thread_cfg);
+    CHECK(tId, return ARM_DRIVER_ERROR);
+
     // Start thread execution
     osSts = osKernelStart();
-    CHECK(osSts == osOK, return -1);
+    CHECK(osSts == osOK, return ARM_DRIVER_ERROR);
 
     /* Wait forever here other wise the owned threads will die */
     for (;;) {
+        __NOP();
     }
 
     return 0;

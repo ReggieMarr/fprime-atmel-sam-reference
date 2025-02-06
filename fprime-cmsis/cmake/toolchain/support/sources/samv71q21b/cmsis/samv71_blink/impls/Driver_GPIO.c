@@ -281,7 +281,7 @@ static void GPIO_SetOutput(ARM_GPIO_Pin_t pin, uint32_t val) {
 
 // Get GPIO Input Level
 static uint32_t GPIO_GetInput(ARM_GPIO_Pin_t pin) {
-    CHECK(IS_PIN_AVAILABLE(pin), return);
+    CHECK(IS_PIN_AVAILABLE(pin), return 0);
     uint32_t port = PIN_TO_PORT(pin);
     uint32_t pinMask = PIN_MASK(pin);
     volatile pio_registers_t* pioPort = (pio_registers_t*)port;
