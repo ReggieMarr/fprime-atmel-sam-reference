@@ -8,6 +8,11 @@ RUN apt-get update && \
         sudo build-essential udev git wget curl rsync make cmake openocd \
         libpython3-dev python3-full python3-dev pipx
 
+RUN apt install --no-install-recommends git cmake ninja-build gperf \
+  ccache dfu-util device-tree-compiler wget \
+  python3-dev python3-pip python3-setuptools python3-tk python3-wheel xz-utils file \
+  make gcc gcc-multilib g++-multilib libsdl2-dev libmagic1
+
 # Set the version of the ARM toolchain
 ENV ARM_TOOLCHAIN_VERSION="10.3-2021.10"
 ENV ARM_TOOLCHAIN_PATH="/opt/arm-none-eabi"
@@ -53,52 +58,6 @@ COPY ./deps/50-cmsis-dap.rules /etc/udev/rules.d/50-cmsis-dap.rules
 USER user
 RUN pipx install pyocd
 RUN pyocd pack install ATSAMV71Q21B
-
-# MPLAB installation layer
-# FROM user-setup AS mplab-setup
-# ENV MPLABX_VERSION=6.20
-# ENV XC32_VERSION=4.45
-# WORKDIR /tmp
-
-# RUN apt-get update && \
-#     apt-get upgrade -y && \
-#     apt-get install -y \
-#     libusb-1.0-0 \
-#     default-jdk \
-#     default-jre \
-#     libxtst6 \
-#     libxrender1 \
-#     libxi6
-
-# # Download and extract MPLAB X
-# RUN curl -qgb "" -fLC - --retry 3 --retry-delay 3 \
-#     -e "https://www.microchip.com/en-us/tools-resources/develop/mplab-x-ide" \
-#     -o mplabx-installer.tar \
-#     "https://ww1.microchip.com/downloads/aemDocuments/documents/DEV/ProductDocuments/SoftwareTools/MPLABX-v${MPLABX_VERSION}-linux-installer.tar" && \
-#     tar xf mplabx-installer.tar && \
-#     rm mplabx-installer.tar
-
-# # Install MPLAB X
-# RUN USER=root ./MPLABX-v${MPLABX_VERSION}-linux-installer.sh --nox11 \
-#     -- --unattendedmodeui none --mode unattended && \
-#     rm ./MPLABX-v${MPLABX_VERSION}-linux-installer.sh
-
-# # Download and install XC32 compiler
-# # https://www.microchip.com/en-us/tools-resources/develop/mplab-xc-compilers/xc32
-# # RUN curl -fSL -A "Mozilla/4.0" -o /tmp/xc32.run "https://ww1.microchip.com/downloads/aemDocuments/documents/DEV/ProductDocuments/SoftwareTools/xc32-v${XC32_VERSION}-full-install-linux64-installer.run" \
-# #     && chmod a+x /tmp/xc16.run \
-# #     && /tmp/xc32.run --mode unattended --unattendedmodeui none \
-# #         --netservername localhost --LicenseType FreeMode \
-# #     && rm /tmp/xc32.run
-
-# WORKDIR /home/user/tools/
-# COPY ./deps/.mplab/tools/xc32-v4.45-full-install-linux-x64-installer.run .
-# RUN ./xc32-v4.45-full-install-linux-x64-installer.run --mode unattended \
-#     --unattendedmodeui none --netservername localhost --LicenseType FreeMode
-
-# ENV PATH /opt/microchip/xc32/v${XC32_VERSION}/bin:$PATH
-
-# RUN chown -R user:user /opt/microchip/
 
 # # Final layer with project setup
 # FROM mplab-setup AS project
@@ -156,6 +115,8 @@ RUN pip install --upgrade pip
 # Install Python packages (now using pip directly in virtualenv)
 RUN pip install setuptools_scm fprime-tools && \
     pip install -r $WDIR/deps/fprime/requirements.txt
+
+RUN pip install west
 
 FROM project-setup AS cmsis-setup
 
