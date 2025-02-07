@@ -373,21 +373,11 @@ build:
           category: sourceC
         - file: harmony/sam_v71_xult/peripheral/efc/plib_efc.c
           category: sourceC
-        - file: harmony/sam_v71_xult/peripheral/usart/plib_usart1.c
-          category: sourceC
-    - group: Device_Harmony_Drivers
-      add-path:
-        - harmony/sam_v71_xult
-      files:
-        - file: harmony/sam_v71_xult/driver/usart/src/drv_usart.c
-          category: sourceC
     - group: Device_Harmony_HAL
       add-path:
         - harmony/sam_v71_xult
       files:
         - file: harmony/sam_v71_xult/interrupts.c
-          category: sourceC
-        - file: harmony/sam_v71_xult/freertos_hooks.c
           category: sourceC
     - group: CMSIS_IMPLS
       add-path:

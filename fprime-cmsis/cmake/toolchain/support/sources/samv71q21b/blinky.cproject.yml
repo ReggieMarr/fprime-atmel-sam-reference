@@ -60,31 +60,16 @@ project:
         - harmony/sam_v71_xult
       files:
         - file: harmony/sam_v71_xult/peripheral/clk/plib_clk.c
-        # - file: harmony/sam_v71_xult/peripheral/pio/plib_pio.c
         - file: harmony/sam_v71_xult/peripheral/nvic/plib_nvic.c
         - file: harmony/sam_v71_xult/peripheral/twihs/master/plib_twihs0_master.c
         - file: harmony/sam_v71_xult/peripheral/efc/plib_efc.c
-        - file: harmony/sam_v71_xult/peripheral/usart/plib_usart1.c
-
-    # - group: Device_Harmony_OS
-    #   add-path:
-    #     - harmony/sam_v71_xult
-    #   files:
-    #     - file: harmony/sam_v71_xult/osal/osal_freertos.c
-
-    - group: Device_Harmony_Drivers
-      add-path:
-        - harmony/sam_v71_xult
-      files:
-        # - file: harmony/sam_v71_xult/driver/i2c/src/drv_i2c.c
-        - file: harmony/sam_v71_xult/driver/usart/src/drv_usart.c
 
     - group: Device_Harmony_HAL
       add-path:
         - harmony/sam_v71_xult
       files:
         - file: harmony/sam_v71_xult/interrupts.c
-        - file: harmony/sam_v71_xult/freertos_hooks.c
+        # - file: harmony/sam_v71_xult/freertos_hooks.c
         # - file: harmony/sam_v71_xult/initialization.c
 
     - group: CMSIS_IMPLS
