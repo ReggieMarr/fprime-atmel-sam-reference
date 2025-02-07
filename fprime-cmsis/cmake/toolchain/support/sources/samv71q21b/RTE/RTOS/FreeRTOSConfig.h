@@ -68,6 +68,14 @@
 //  <i> Default: 80
 #define configTIMER_TASK_STACK_DEPTH 80
 
+/* Sets the type used by the parameter to xTaskCreate() that specifies the stack
+ * size of the task being created.  The same type is used to return information
+ * about stack usage in various other API calls.  Defaults to size_t if left
+ * undefined. */
+// NOTE this was defined by harmony example codes as such
+// TODO check implications for cmsis-rtos2 interfacing
+/* #define configSTACK_DEPTH_TYPE                     uint16_t */
+
 //  <o>Timer task priority <0-56>
 //  <i> Timer task priority.
 //  <i> Default: 40 (High)
@@ -320,6 +328,13 @@
 #define configASSERT(x) \
     if ((x) == 0)       \
     taskDISABLE_INTERRUPTS()
+
+/* Each task has its own array of pointers that can be used as thread local
+ * storage.  configNUM_THREAD_LOCAL_STORAGE_POINTERS set the number of indexes in
+ * the array.  See https://www.freertos.org/thread-local-storage-pointers.html
+ * Defaults to 0 if left undefined. */
+// NOTE this is pretty interesting
+/* #define configNUM_THREAD_LOCAL_STORAGE_POINTERS    0 */
 
 //------------- <<< end of configuration section >>> ---------------------------
 
