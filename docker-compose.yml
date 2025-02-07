@@ -14,6 +14,16 @@ services:
     volumes:
       - ./:$SAM_WDIR
 
+  sam-tty:
+      container_name: fprime-sam-tty
+      extends: sam
+      devices:
+        - "${HOST_DEVICE_PORT:-/dev/ttyACM0}:/dev/ttyACM0"
+        - "/dev/bus/usb:/dev/bus/usb"
+        - "/dev/usb:/dev/usb"
+      group_add:
+        - "dialout"
+
   mplab:
     image: $SAM_IMG
     build:
