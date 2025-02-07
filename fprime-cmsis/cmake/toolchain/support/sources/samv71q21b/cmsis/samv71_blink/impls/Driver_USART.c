@@ -123,295 +123,158 @@ typedef struct {
 
 static impl_t ME;
 
-static int32_t ARM_USART_Initialize(ARM_USART_SignalEvent_t cb_event) {
-    ME.cb_event = cb_event;
+#include <stddef.h>
+#include <string.h>
+#include "Driver_USART.h"
+#include "sam.h"  // Contains USART1 register definitions
 
-    ME.sysObj = DRV_USART_Initialize(DRV_USART_INDEX_0, (SYS_MODULE_INIT*)&drvUsart0InitData);
+// USART Ring Buffers
+#define USART1_TX_BUFFER_SIZE 128
+#define USART1_RX_BUFFER_SIZE 128
 
-    if (ME.sysObj == SYS_MODULE_OBJ_INVALID) {
-        return ARM_DRIVER_ERROR;
-    }
+static uint8_t txBuffer[USART1_TX_BUFFER_SIZE];
+static uint8_t rxBuffer[USART1_RX_BUFFER_SIZE];
+static size_t txCount = 0;
+static size_t rxCount = 0;
+static ARM_USART_SignalEvent_t USART1_Callback;
 
-    // Wait for the driver to be ready
-    while (DRV_USART_Status(ME.sysObj) != SYS_STATUS_READY) {
-        // NOTE Could add timeout here
-    }
+// USART Driver Control Block
+static ARM_USART_STATUS usart1_status;
+static bool usart1_initialized = false, usart1_powered = false;
+#define USART1 USART1_REGS
 
-    ME.handle = DRV_USART_Open(DRV_USART_INDEX_0, DRV_IO_INTENT_READWRITE | DRV_IO_INTENT_NONBLOCKING);
-    CHECK(ME.handle != DRV_HANDLE_INVALID, return ARM_DRIVER_ERROR);
+// USART1 IRQ Handler
+void USART1_Handler(void) {
+    uint32_t status = USART1->US_CSR;
 
-    ME.initialized = true;
-    ME.powered = false;
-
-    return ARM_DRIVER_OK;
-}
-
-static int32_t ARM_USART_Uninitialize(void) {
-    if (!ME.initialized) {
-        return ARM_DRIVER_OK;
-    }
-
-    // Check if powered
-    if (ME.powered) {
-        return ARM_DRIVER_ERROR;
-    }
-
-    // Close the driver handle
-    if (ME.handle != DRV_HANDLE_INVALID) {
-        DRV_USART_Close(ME.handle);
-        ME.handle = DRV_HANDLE_INVALID;
-    }
-
-    ME.cb_event = NULL;
-
-    return ARM_DRIVER_OK;
-}
-
-static int32_t ARM_USART_Send(const void* data, uint32_t num) {
-    if (!data || !num)
-        return ARM_DRIVER_ERROR_PARAMETER;
-    if (!ME.initialized)
-        return ARM_DRIVER_ERROR;
-    if (ME.status.tx_busy)
-        return ARM_DRIVER_ERROR_BUSY;
-
-    ME.status.tx_busy = 1;
-    ME.tx_count = 0;
-
-    bool success = DRV_USART_WriteBuffer(ME.handle, (void*)data, num);
-
-    if (!success) {
-        ME.status.tx_busy = 0;
-        return ARM_DRIVER_ERROR;
-    }
-
-    return ARM_DRIVER_OK;
-}
-
-static int32_t ARM_USART_Receive(void* data, uint32_t num) {
-    if (!data || !num)
-        return ARM_DRIVER_ERROR_PARAMETER;
-    if (!ME.initialized)
-        return ARM_DRIVER_ERROR;
-    if (ME.status.rx_busy)
-        return ARM_DRIVER_ERROR_BUSY;
-
-    ME.status.rx_busy = 1;
-    ME.rx_count = 0;
-
-    bool success = DRV_USART_ReadBuffer(ME.handle, data, num);
-
-    if (!success) {
-        ME.status.rx_busy = 0;
-        return ARM_DRIVER_ERROR;
-    }
-
-    return ARM_DRIVER_OK;
-}
-
-static int32_t ARM_USART_Transfer(const void* data_out, void* data_in, uint32_t num) {
-    // Not supported in this implementation as Harmony doesn't provide direct transfer
-    return ARM_DRIVER_ERROR_UNSUPPORTED;
-}
-
-static uint32_t ARM_USART_GetTxCount(void) {
-    return ME.tx_count;
-}
-
-static uint32_t ARM_USART_GetRxCount(void) {
-    return ME.rx_count;
-}
-
-static int32_t ARM_USART_Control(uint32_t control, uint32_t arg) {
-    if (!ME.initialized)
-        return ARM_DRIVER_ERROR;
-
-    switch (control & ARM_USART_CONTROL_Msk) {
-        case ARM_USART_MODE_ASYNCHRONOUS: {
-            DRV_USART_SERIAL_SETUP setup = {.baudRate = arg,
-                                            .dataWidth = DRV_USART_DATA_8_BIT,
-                                            .parity = DRV_USART_PARITY_NONE,
-                                            .stopBits = DRV_USART_STOP_1_BIT};
-
-            // Apply data bits setting
-            switch (control & ARM_USART_DATA_BITS_Msk) {
-                case ARM_USART_DATA_BITS_5:
-                    setup.dataWidth = DRV_USART_DATA_5_BIT;
-                    break;
-                case ARM_USART_DATA_BITS_6:
-                    setup.dataWidth = DRV_USART_DATA_6_BIT;
-                    break;
-                case ARM_USART_DATA_BITS_7:
-                    setup.dataWidth = DRV_USART_DATA_7_BIT;
-                    break;
-                case ARM_USART_DATA_BITS_8:
-                    setup.dataWidth = DRV_USART_DATA_8_BIT;
-                    break;
-                case ARM_USART_DATA_BITS_9:
-                    setup.dataWidth = DRV_USART_DATA_9_BIT;
-                    break;
-                default:
-                    return ARM_DRIVER_ERROR_UNSUPPORTED;
-            }
-
-            // Apply parity setting
-            switch (control & ARM_USART_PARITY_Msk) {
-                case ARM_USART_PARITY_NONE:
-                    setup.parity = DRV_USART_PARITY_NONE;
-                    break;
-                case ARM_USART_PARITY_EVEN:
-                    setup.parity = DRV_USART_PARITY_EVEN;
-                    break;
-                case ARM_USART_PARITY_ODD:
-                    setup.parity = DRV_USART_PARITY_ODD;
-                    break;
-                default:
-                    return ARM_DRIVER_ERROR_UNSUPPORTED;
-            }
-
-            // Apply stop bits setting
-            switch (control & ARM_USART_STOP_BITS_Msk) {
-                case ARM_USART_STOP_BITS_1:
-                    setup.stopBits = DRV_USART_STOP_1_BIT;
-                    break;
-                case ARM_USART_STOP_BITS_2:
-                    setup.stopBits = DRV_USART_STOP_2_BIT;
-                    break;
-                default:
-                    return ARM_DRIVER_ERROR_UNSUPPORTED;
-            }
-
-            if (!DRV_USART_SerialSetup(ME.handle, &setup)) {
-                return ARM_DRIVER_ERROR;
-            }
-            break;
+    // Check if RX ready
+    if (status & US_CSR_RXRDY_Msk) {
+        uint8_t rxd = USART1->US_RHR & US_RHR_RXCHR_Msk;
+        if (rxCount < USART1_RX_BUFFER_SIZE) {
+            rxBuffer[rxCount++] = rxd;
         }
-
-        case ARM_USART_CONTROL_TX:
-            // Enable/disable TX
-            // Note: Harmony might not support direct TX enable/disable
-            break;
-
-        case ARM_USART_CONTROL_RX:
-            // Enable/disable RX
-            // Note: Harmony might not support direct RX enable/disable
-            break;
-
-        case ARM_USART_ABORT_SEND:
-            // Abort ongoing TX operation
-            ME.status.tx_busy = 0;
-            break;
-
-        case ARM_USART_ABORT_RECEIVE:
-            // Abort ongoing RX operation
-            ME.status.rx_busy = 0;
-            break;
-
-        default:
-            return ARM_DRIVER_ERROR_UNSUPPORTED;
+        if (USART1_Callback)
+            USART1_Callback(ARM_USART_EVENT_RECEIVE_COMPLETE);
     }
 
+    // Check if TX ready
+    if (status & US_CSR_TXRDY_Msk && txCount > 0) {
+        USART1->US_THR = txBuffer[--txCount];
+        if (txCount == 0) {
+            USART1->US_IDR = US_IDR_TXRDY_Msk;  // Disable TX interrupt
+            if (USART1_Callback)
+                USART1_Callback(ARM_USART_EVENT_SEND_COMPLETE);
+        }
+    }
+}
+
+/// Initialize USART
+static int32_t USART1_Initialize(ARM_USART_SignalEvent_t cb_event) {
+    if (usart1_initialized)
+        return ARM_DRIVER_OK;
+
+    // Store callback
+    USART1_Callback = cb_event;
+
+    // Enable peripheral clock
+    PMC->PMC_PCER0 |= (1 << ID_USART1);
+
+    // Reset USART1 and enable TX/RX
+    USART1->US_CR = US_CR_RSTRX_Msk | US_CR_RSTTX_Msk | US_CR_RSTSTA_Msk;
+    USART1->US_CR = US_CR_TXEN_Msk | US_CR_RXEN_Msk;
+
+    usart1_initialized = true;
     return ARM_DRIVER_OK;
 }
 
-static int32_t ARM_USART_PowerControl(ARM_POWER_STATE state) {
-    if (!ME.initialized) {
+/// Power Control
+static int32_t USART1_PowerControl(ARM_POWER_STATE state) {
+    if (!usart1_initialized)
         return ARM_DRIVER_ERROR;
-    }
 
-    switch (state) {
-        case ARM_POWER_OFF:
-            if (!ME.powered) {
-                return ARM_DRIVER_OK;
-            }
-
-            // Disable TX and RX
-            ARM_USART_Control(ARM_USART_CONTROL_TX, 0);
-            ARM_USART_Control(ARM_USART_CONTROL_RX, 0);
-
-            // Abort any ongoing transfers
-            if (ME.status.tx_busy) {
-                ARM_USART_Control(ARM_USART_ABORT_SEND, 0);
-            }
-            if (ME.status.rx_busy) {
-                ARM_USART_Control(ARM_USART_ABORT_RECEIVE, 0);
-            }
-
-            // Clear status
-            memset(&ME.status, 0, sizeof(ARM_USART_STATUS));
-            ME.powered = false;
-            break;
-
-        case ARM_POWER_LOW:
-            // Optional: Implement low power mode if supported
-            return ARM_DRIVER_ERROR_UNSUPPORTED;
-
-        case ARM_POWER_FULL:
-            if (ME.powered) {
-                return ARM_DRIVER_OK;
-            }
-
-            // Initialize hardware if needed
-            // This might involve setting up clocks, pins, etc.
-
-            // Reset counters
-            ME.tx_count = 0;
-            ME.rx_count = 0;
-
-            // Clear status
-            memset(&ME.status, 0, sizeof(ARM_USART_STATUS));
-
-            // Enable TX and RX if needed
-            ARM_USART_Control(ARM_USART_CONTROL_TX, 1);
-            ARM_USART_Control(ARM_USART_CONTROL_RX, 1);
-
-            ME.powered = true;
-            break;
-
-        default:
-            return ARM_DRIVER_ERROR_PARAMETER;
+    if (state == ARM_POWER_FULL) {
+        usart1_powered = true;
+        PMC->PMC_PCER0 |= (1 << ID_USART1);
+    } else if (state == ARM_POWER_OFF) {
+        usart1_powered = false;
+        PMC->PMC_PCDR0 |= (1 << ID_USART1);
     }
 
     return ARM_DRIVER_OK;
 }
 
-static ARM_USART_STATUS ARM_USART_GetStatus(void) {
-    return ME.status;
+/// Set USART Configuration
+static int32_t USART1_Control(uint32_t control, uint32_t arg) {
+    if (!usart1_initialized)
+        return ARM_DRIVER_ERROR;
+
+    uint32_t mode = US_MR_CHRL_8_BIT | US_MR_PAR_NO | US_MR_NBSTOP_1_BIT;
+
+    if (control & ARM_USART_PARITY_NONE)
+        mode |= US_MR_PAR_NO;
+    if (control & ARM_USART_PARITY_ODD)
+        mode |= US_MR_PAR_ODD;
+    if (control & ARM_USART_PARITY_EVEN)
+        mode |= US_MR_PAR_EVEN;
+
+    if (control & ARM_USART_STOP_BITS_2)
+        mode |= US_MR_NBSTOP_2_BIT;
+
+    USART1->US_MR = mode;
+    USART1->US_BRGR = SystemCoreClock / (16 * arg);
+
+    return ARM_DRIVER_OK;
 }
 
-static ARM_USART_MODEM_STATUS ARM_USART_GetModemStatus(void) {
-    return ME.modem_status;
+/// Send Data
+static int32_t USART1_Send(const void* data, uint32_t num) {
+    if (!usart1_initialized || txCount > 0)
+        return ARM_DRIVER_ERROR_BUSY;
+
+    memcpy(txBuffer, data, num);
+    txCount = num;
+
+    // Enable TX interrupt
+    USART1->US_IER = US_IER_TXRDY_Msk;
+    return ARM_DRIVER_OK;
 }
 
-static int32_t ARM_USART_SetModemControl(ARM_USART_MODEM_CONTROL control) {
-    return 0;
-}
+/// Receive Data
+static int32_t USART1_Receive(void* data, uint32_t num) {
+    if (!usart1_initialized)
+        return ARM_DRIVER_ERROR;
 
-void __attribute__((weak)) ARM_USART_SignalEvent(uint32_t event) {
-    switch (event) {
-        case DRV_USART_BUFFER_EVENT_PENDING:
-            // Signal ARM_I2C_EVENT_TRANSFER_INCOMPLETE
-            break;
-
-        case DRV_USART_BUFFER_EVENT_COMPLETE:
-            // Signal ARM_I2C_EVENT_TRANSFER_DONE
-            break;
-
-        case DRV_USART_BUFFER_EVENT_HANDLE_EXPIRED:
-        case DRV_USART_BUFFER_EVENT_HANDLE_INVALID:
-        case DRV_USART_BUFFER_EVENT_ERROR:
-        default:
-            // Signal appropriate error event
-            // (ARM_I2C_EVENT_ADDRESS_NACK, ARM_I2C_EVENT_BUS_ERROR, etc.)
-            break;
+    size_t count = 0;
+    while (count < num && rxCount > 0) {
+        ((uint8_t*)data)[count++] = rxBuffer[--rxCount];
     }
+
+    return count;
 }
 
-// End USART Interface
+/// Get TX Count
+static uint32_t USART1_GetTxCount(void) {
+    return USART1_TX_BUFFER_SIZE - txCount;
+}
 
-extern ARM_DRIVER_USART Driver_USART0;
-ARM_DRIVER_USART Driver_USART0 = {ARM_USART_GetVersion,      ARM_USART_GetCapabilities, ARM_USART_Initialize,
-                                  ARM_USART_Uninitialize,    ARM_USART_PowerControl,    ARM_USART_Send,
-                                  ARM_USART_Receive,         ARM_USART_Transfer,        ARM_USART_GetTxCount,
-                                  ARM_USART_GetRxCount,      ARM_USART_Control,         ARM_USART_GetStatus,
-                                  ARM_USART_SetModemControl, ARM_USART_GetModemStatus};
+/// Get RX Count
+static uint32_t USART1_GetRxCount(void) {
+    return rxCount;
+}
+
+/// Get Status
+static ARM_USART_STATUS USART1_GetStatus(void) {
+    return usart1_status;
+}
+
+/// CMSIS USART Driver Instance
+ARM_DRIVER_USART Driver_USART1 = {.GetVersion = NULL,
+                                  .GetCapabilities = NULL,
+                                  .Initialize = USART1_Initialize,
+                                  .PowerControl = USART1_PowerControl,
+                                  .Send = USART1_Send,
+                                  .Receive = USART1_Receive,
+                                  .GetTxCount = USART1_GetTxCount,
+                                  .GetRxCount = USART1_GetRxCount,
+                                  .Control = USART1_Control,
+                                  .GetStatus = USART1_GetStatus};
