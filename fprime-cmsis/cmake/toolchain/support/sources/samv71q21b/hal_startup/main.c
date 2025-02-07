@@ -20,13 +20,15 @@
 /* extern ARM_DRIVER_I2C Driver_I2C0; */
 /* static ARM_DRIVER_I2C* I2Cdrv = &Driver_I2C0; */
 
-extern ARM_DRIVER_USART Driver_USART0;
-static ARM_DRIVER_USART* usartDrv = &Driver_USART0;
+extern ARM_DRIVER_USART Driver_USART1;
+static ARM_DRIVER_USART* usartDrv = &Driver_USART1;
 
 extern ARM_DRIVER_GPIO Driver_GPIO;
 static ARM_DRIVER_GPIO* gpioDrv = &Driver_GPIO;
 
 static const uint32_t LEDS[] = {PIN_PA23, PIN_PC9};
+static const uint32_t SWITCHES[] = {PIN_PA9, PIN_PB12};
+static const uint32_t VBUS_HOST_EN = PIN_PC16;
 
 // Pre-Main startup bootstrap
 void _on_bootstrap(void) {
@@ -63,10 +65,6 @@ void _on_bootstrap(void) {
 
     /* Initialize Communication Peripherals */
     TWIHS0_Initialize();
-    USART1_Initialize();
-
-    /* Initialize Peripheral Drivers */
-    /* I2Cdrv->Initialize(NULL); */
 
     /* Configure Nested Vector Interrupt Controller (NVIC) */
     NVIC_Initialize();
@@ -93,18 +91,41 @@ static const osThreadAttr_t led_thread_cfg = {
 
 static osSemaphoreId_t readyToBlink;
 
-void setup_leds(void) {
-    gpioDrv->Setup(LEDS[0], NULL);
-    gpioDrv->SetDirection(LEDS[0], ARM_GPIO_OUTPUT);
-    gpioDrv->SetOutputMode(LEDS[0], ARM_GPIO_PUSH_PULL);
-    gpioDrv->SetEventTrigger(LEDS[0], ARM_GPIO_TRIGGER_NONE);
-    gpioDrv->SetPullResistor(LEDS[0], ARM_GPIO_PULL_NONE);
+void setup_gpios(void) {
+    int32_t sts;
 
-    gpioDrv->Setup(LEDS[1], NULL);
-    gpioDrv->SetDirection(LEDS[1], ARM_GPIO_OUTPUT);
-    gpioDrv->SetOutputMode(LEDS[1], ARM_GPIO_PUSH_PULL);
-    gpioDrv->SetEventTrigger(LEDS[1], ARM_GPIO_TRIGGER_NONE);
-    gpioDrv->SetPullResistor(LEDS[1], ARM_GPIO_PULL_NONE);
+    sts = gpioDrv->Setup(LEDS[0], NULL);
+    CHECK(sts == ARM_DRIVER_OK, return);
+    sts = gpioDrv->SetDirection(LEDS[0], ARM_GPIO_OUTPUT);
+    CHECK(sts == ARM_DRIVER_OK, return);
+    sts = gpioDrv->SetOutputMode(LEDS[0], ARM_GPIO_PUSH_PULL);
+    CHECK(sts == ARM_DRIVER_OK, return);
+    sts = gpioDrv->SetEventTrigger(LEDS[0], ARM_GPIO_TRIGGER_NONE);
+    CHECK(sts == ARM_DRIVER_OK, return);
+    sts = gpioDrv->SetPullResistor(LEDS[0], ARM_GPIO_PULL_NONE);
+    CHECK(sts == ARM_DRIVER_OK, return);
+
+    sts = gpioDrv->Setup(LEDS[1], NULL);
+    CHECK(sts == ARM_DRIVER_OK, return);
+    sts = gpioDrv->SetDirection(LEDS[1], ARM_GPIO_OUTPUT);
+    CHECK(sts == ARM_DRIVER_OK, return);
+    sts = gpioDrv->SetOutputMode(LEDS[1], ARM_GPIO_PUSH_PULL);
+    CHECK(sts == ARM_DRIVER_OK, return);
+    sts = gpioDrv->SetEventTrigger(LEDS[1], ARM_GPIO_TRIGGER_NONE);
+    CHECK(sts == ARM_DRIVER_OK, return);
+    sts = gpioDrv->SetPullResistor(LEDS[1], ARM_GPIO_PULL_NONE);
+    CHECK(sts == ARM_DRIVER_OK, return);
+
+    sts = gpioDrv->Setup(VBUS_HOST_EN, NULL);
+    CHECK(sts == ARM_DRIVER_OK, return);
+    sts = gpioDrv->SetDirection(VBUS_HOST_EN, ARM_GPIO_OUTPUT);
+    CHECK(sts == ARM_DRIVER_OK, return);
+    sts = gpioDrv->SetOutputMode(VBUS_HOST_EN, ARM_GPIO_PUSH_PULL);
+    CHECK(sts == ARM_DRIVER_OK, return);
+    sts = gpioDrv->SetEventTrigger(VBUS_HOST_EN, ARM_GPIO_TRIGGER_NONE);
+    CHECK(sts == ARM_DRIVER_OK, return);
+    sts = gpioDrv->SetPullResistor(VBUS_HOST_EN, ARM_GPIO_PULL_NONE);
+    CHECK(sts == ARM_DRIVER_OK, return);
 }
 
 void toggle_oscillating_leds(int cycleCnt, int delay) {
@@ -234,7 +255,7 @@ int main(void) {
     static blinkArg_t blinkArgs = {.tickDelay = 1000};
 
     // Initialize LED's
-    setup_leds();
+    setup_gpios();
 
     // Initialize CMSIS-RTOS
     osStatus_t osSts;

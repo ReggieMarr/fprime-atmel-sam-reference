@@ -1,5 +1,9 @@
 #include "Driver_USART.h"
+#include <stdint.h>
 #include <string.h>
+#include "cmsis_os2.h"
+#include "peripheral/usart/plib_usart1.h"
+#include "pio/samv71q21b.h"
 #include "sam.h"
 
 #define ARM_USART_DRV_VERSION ARM_DRIVER_VERSION_MAJOR_MINOR(1, 0) /* driver version */
@@ -53,6 +57,21 @@ typedef struct {
     bool powered;
     ARM_USART_STATUS status;
     ARM_USART_MODEM_STATUS modem_status;
+
+    /* Transmit mutex */
+    osMutexId_t clientMutex;
+
+    /* Transmit mutex */
+    osMutexId_t txTransferMutex;
+
+    /* Receive mutex */
+    osMutexId_t rxTransferMutex;
+
+    /* Transmit complete semaphore. This is released from ISR*/
+    osMutexId_t txTransferDone;
+
+    /* Receive complete semaphore. This is released from ISR*/
+    osSemaphoreId_t rxTransferDone;
 } impl_t;
 
 static impl_t ME;
@@ -80,6 +99,9 @@ static USART1_CONTROL_BLOCK usart1_cb = {false, false, {0}, {0}};
 #define USART1 USART1_REGS
 #define PMC PMC_REGS
 
+static const uint32_t UART_VCOM_TX = PIN_PB4;
+static const uint32_t UART_VCOM_RX = PIN_PA21;
+
 static void USART1_ErrorClear(void) {
     uint8_t dummyData = 0u;
 
@@ -97,6 +119,63 @@ static void USART1_ErrorClear(void) {
     (void)dummyData;
 }
 
+static void USART1_RX_InterruptHandler(void) {
+    uint16_t rxData = 0;
+
+    if (ME.rxBusyStatus == true) {
+        while ((USART1_REGS->US_CSR & US_CSR_USART_RXRDY_Msk) && (ME.rxSize > ME.rxProcessedSize)) {
+            rxData = USART1_REGS->US_RHR & US_RHR_RXCHR_Msk;
+            if (USART1_REGS->US_MR & US_MR_USART_MODE9_Msk) {
+                ((uint16_t*)ME.rxBuffer)[ME.rxProcessedSize++] = (uint16_t)rxData;
+            } else {
+                ME.rxBuffer[ME.rxProcessedSize++] = (uint8_t)rxData;
+            }
+        }
+
+        /* Check if the buffer is done */
+        if (ME.rxProcessedSize >= ME.rxSize) {
+            ME.rxBusyStatus = false;
+
+            /* Disable Read, Overrun, Parity and Framing error interrupts */
+            USART1_REGS->US_IDR =
+                (US_IDR_USART_RXRDY_Msk | US_IDR_USART_FRAME_Msk | US_IDR_USART_PARE_Msk | US_IDR_USART_OVRE_Msk);
+
+            if (ME.rxCallback != NULL) {
+                ME.rxCallback(ME.rxContext);
+            }
+        }
+    } else {
+        /* Nothing to process */
+        ;
+    }
+}
+
+static void USART1_TX_InterruptHandler(void) {
+    if (ME.txBusyStatus == true) {
+        while ((USART1_REGS->US_CSR & US_CSR_USART_TXRDY_Msk) && (ME.txSize > ME.txProcessedSize)) {
+            if (USART1_REGS->US_MR & US_MR_USART_MODE9_Msk) {
+                USART1_REGS->US_THR = ((uint16_t*)ME.txBuffer)[ME.txProcessedSize++] & US_THR_TXCHR_Msk;
+            } else {
+                USART1_REGS->US_THR = ME.txBuffer[ME.txProcessedSize++] & US_THR_TXCHR_Msk;
+            }
+        }
+
+        /* Check if the buffer is done */
+        if (ME.txProcessedSize >= ME.txSize) {
+            ME.txBusyStatus = false;
+
+            USART1_REGS->US_IDR = US_IDR_USART_TXRDY_Msk;
+
+            if (ME.txCallback != NULL) {
+                ME.txCallback(ME.txContext);
+            }
+        }
+    } else {
+        /* Nothing to process */
+        ;
+    }
+}
+
 // USART1 IRQ Handler: Handles TX and RX Interrupts
 void USART1_InterruptHandler(void) {
     uint32_t status = USART1->US_CSR;
@@ -107,7 +186,7 @@ void USART1_InterruptHandler(void) {
 
     if (errorStatus != 0) {
         /* Save the error to be reported later */
-        /* usart1Obj.errorStatus = (USART_ERROR)errorStatus; */
+        /* ME.errorStatus = (USART_ERROR)errorStatus; */
 
         /* Clear error flags and flush the error data */
         USART1_ErrorClear();
@@ -116,12 +195,12 @@ void USART1_InterruptHandler(void) {
         USART1_REGS->US_IDR =
             (US_IDR_USART_RXRDY_Msk | US_IDR_USART_FRAME_Msk | US_IDR_USART_PARE_Msk | US_IDR_USART_OVRE_Msk);
 
-        /* usart1Obj.rxBusyStatus = false; */
+        /* ME.rxBusyStatus = false; */
 
         /* USART errors are normally associated with the receiver, hence calling
          * receiver callback */
-        /* if (usart1Obj.rxCallback != NULL) { */
-        /*     usart1Obj.rxCallback(usart1Obj.rxContext); */
+        /* if (ME.rxCallback != NULL) { */
+        /*     ME.rxCallback(ME.rxContext); */
         /* } */
     }
 
